@@ -70,7 +70,7 @@ export default function SignatureCanvas({
       <button
         type="button"
         onClick={handleSave}
-        className="mt-6 w-full bg-amber-700 text-white font-bold uppercase tracking-widest text-sm py-3 rounded-lg hover:bg-amber-800 transition-colors shadow-lg shadow-stone-200">
+        className="mt-6 w-full bg-amber-700 text-white font-bold uppercase tracking-widest text-sm py-3 rounded-lg hover:bg-amber-800 transition-all duration-300 active:scale-95 shadow-lg shadow-stone-200">
         Preserve Signature
       </button>
     </div>

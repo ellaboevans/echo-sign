@@ -1,4 +1,5 @@
 "use client";
+import CreateSpaceDialog from "@/components/create-space-dialog";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -36,11 +37,7 @@ export default function Navbar() {
             </nav>
           </div>
           <div className="flex items-center space-x-4">
-            <Link
-              href="/create-space"
-              className="text-sm font-medium px-4 py-2 border border-stone-300 rounded-md hover:bg-stone-50 transition-colors">
-              Create Space
-            </Link>
+            <CreateSpaceDialog>Create Space</CreateSpaceDialog>
           </div>
         </div>
       </div>

@@ -25,7 +25,7 @@ export default function HeroSection() {
       <div className="pt-4">
         <Link
           href="/spaces"
-          className="inline-block bg-amber-700 text-white font-bold uppercase tracking-widest px-8 py-3 rounded-md hover:bg-amber-800 transition-all shadow-xl shadow-amber-100">
+          className="inline-block bg-amber-700 text-white font-bold uppercase tracking-widest px-8 py-3 rounded-md hover:bg-amber-800 transition-all">
           Start Signing
         </Link>
       </div>

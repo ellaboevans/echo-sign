@@ -1,4 +1,5 @@
 "use client";
+import CreateSpaceDialog from "@/components/create-space-dialog";
 import { store } from "@/store/store";
 import { Space } from "@/types/types";
 import Link from "next/link";
@@ -50,16 +51,14 @@ export default function SpaceConfiguration() {
         </Link>
       ))}
 
-      <Link
-        href="/create-space"
-        className="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50 hover:bg-stone-50 transition-colors group">
+      <CreateSpaceDialog triggerClassName="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50 hover:bg-stone-50 transition-colors group">
         <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border border-stone-200 mb-4 group-hover:scale-110 transition-transform">
           <span className="text-2xl text-stone-400">+</span>
         </div>
         <span className="text-sm font-bold uppercase tracking-widest text-stone-500 group-hover:text-stone-900">
           Create Your Own Wall
         </span>
-      </Link>
+      </CreateSpaceDialog>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 "use client";
+import SignDialog from "@/components/sign-dialog";
 import SignatureCard from "@/components/signature-card";
 import { store } from "@/store/store";
 import { Space, SignatureEntry } from "@/types/types";
@@ -64,11 +65,7 @@ export default function SpaceDetailView({ id }: Props) {
           </p>
         </div>
         <div className="shrink-0">
-          <Link
-            href={`/space/${space.id}/sign`}
-            className="inline-block bg-amber-700 text-white font-bold uppercase tracking-widest px-6 py-3 rounded-lg hover:bg-amber-800 transition-all shadow-xl shadow-stone-200">
-            Leave Your Signature
-          </Link>
+          <SignDialog space={space} />
         </div>
       </div>
 
