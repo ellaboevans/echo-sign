@@ -1,6 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
+import GridBackground from "@/components/grid-background";
 import "./globals.css";
+
+import { Grape_Nuts, Crimson_Text } from "next/font/google";
+
+const grapeNuts = Grape_Nuts({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: "400",
+});
+
+const crimsonText = Crimson_Text({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400", "600"],
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +39,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${grapeNuts.variable} ${crimsonText.variable} ${geistSans.variable}`}>
+      <head>
+        <Script
+          src="https://cdn.jsdelivr.net/npm/signature_pad@4.2.0/dist/signature_pad.umd.min.js"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+        className={`antialiased relative`}>
+        <GridBackground />
+        <div className="relative z-10">
+          {children}
+        </div>
       </body>
     </html>
   );
