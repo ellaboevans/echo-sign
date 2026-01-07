@@ -1,10 +1,4 @@
-import Groq from "groq-sdk";
 import { SignatureEntry } from "@/types/types";
-
-const groq = new Groq({
-  apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
 
 export async function generateMemoryReflection(
   entry: SignatureEntry
@@ -13,21 +7,22 @@ export async function generateMemoryReflection(
     return "A silent mark left in the digital sands of time.";
 
   try {
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: `Provide a short, poetic, one-sentence reflection on this memory: "${entry.memoryText}". The reflection should be archival and respectful. Do not use conversational filler.`,
-        },
-      ],
-      model: "openai/gpt-oss-20b",
+    const response = await fetch("/api/reflect", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ memoryText: entry.memoryText }),
     });
-    return (
-      chatCompletion.choices[0]?.message?.content ||
-      "A profound moment captured for posterity."
-    );
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.reflection || "A profound moment captured for posterity.";
   } catch (error) {
-    console.error("Groq failed:", error);
+    console.error("Reflection generation failed:", error);
     return "A shared fragment of a unique journey.";
   }
 }
