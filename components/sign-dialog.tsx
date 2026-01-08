@@ -86,7 +86,9 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className={'text-2xl'}>Signing the &ldquo;{space.name}&rdquo;</DialogTitle>
+          <DialogTitle className={"text-2xl"}>
+            Signing the &ldquo;{space.name}&rdquo;
+          </DialogTitle>
           <DialogDescription>
             Your signature and memory will be permanently archived in this
             space.
@@ -107,7 +109,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="How should you be remembered?"
-                className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-auto"
+                className="w-full rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm"
                 required
               />
             </div>
@@ -123,7 +125,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="For recovery (never public)"
-                className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-auto"
+                className="w-full rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm"
               />
             </div>
           </div>
@@ -139,7 +141,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
               value={memory}
               onChange={(e) => setMemory(e.target.value)}
               placeholder="Write a brief thought, message, or reflection..."
-              className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic"
+              className="w-full px-2 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic"
             />
           </div>
 
@@ -159,8 +161,8 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                 <Select
                   value={visibility}
                   onValueChange={(value) => setVisibility(value as Visibility)}>
-                  <SelectTrigger className="w-45">
-                    <SelectValue />
+                  <SelectTrigger className="w-fit pr-1">
+                    {visibility.charAt(0).toUpperCase() + visibility.slice(1)}
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -182,7 +184,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
         </div>
 
         {isSubmitting && (
-          <div className="absolute inset-0 bg-black/10 rounded-xl flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/10 backdrop-blur-xs rounded-xl flex items-center justify-center">
             <div className="w-8 h-8 border-4 border-amber-700 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
