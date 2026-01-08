@@ -15,43 +15,45 @@ export default function SpaceConfiguration() {
     }, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  const sign_counts = (space_id: string) =>
+    store.getEntries().filter((e) => e.spaceId === space_id).length;
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {spaces.map((space) => (
-        <Link
-          key={space.id}
-          href={`/space/${space.id}`}
-          className="group block bg-white p-8 rounded-xl border border-stone-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
-          <div className="flex flex-col h-full">
-            <div className="mb-4">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                {space.id === "global-legacy" ? "Primary" : "Community"}
-              </span>
+      {spaces.map((space) => {
+        const count = sign_counts(space.id);
+        return (
+          <Link
+            key={space.id}
+            href={`/space/${space.id}`}
+            className="group block bg-white p-8 rounded-xl border border-stone-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="flex flex-col h-full">
+              <div className="mb-4">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                  {space.id === "global-legacy" ? "Primary" : "Community"}
+                </span>
+              </div>
+              <h2 className="text-2xl font-serifs font-bold text-stone-900 group-hover:text-amber-700 transition-colors mb-2">
+                {space.name}
+              </h2>
+              <p className="text-stone-500 text-sm mb-6 grow">
+                {space.description ||
+                  "A community curated space for signatures and shared memories."}
+              </p>
+              <div className="pt-4 border-t border-stone-100 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-400">
+                <span>
+                  {count} {count > 1 || count == 0 ? "Signatures" : "Signature"}
+                </span>
+                <span className="group-hover:text-amber-700 transition-colors">
+                  Enter Space →
+                </span>
+              </div>
             </div>
-            <h2 className="text-2xl font-serifs font-bold text-stone-900 group-hover:text-amber-700 transition-colors mb-2">
-              {space.name}
-            </h2>
-            <p className="text-stone-500 text-sm mb-6 grow">
-              {space.description ||
-                "A community curated space for signatures and shared memories."}
-            </p>
-            <div className="pt-4 border-t border-stone-100 flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-400">
-              <span>
-                {
-                  store.getEntries().filter((e) => e.spaceId === space.id)
-                    .length
-                }{" "}
-                Signatures
-              </span>
-              <span className="group-hover:text-amber-700 transition-colors">
-                Enter Space →
-              </span>
-            </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
 
-      <CreateSpaceDialog triggerClassName="flex flex-col items-center justify-center p-8 rounded-xl border-2 border-dashed border-stone-200 bg-stone-50/50 hover:bg-stone-50 transition-colors group">
+      <CreateSpaceDialog triggerClassName="flex flex-col items-center justify-center p-8 rounded-xl h-[15rem] w-full border-2 border-dashed border-stone-200 bg-stone-50/50 hover:bg-stone-50 transition-colors group">
         <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border border-stone-200 mb-4 group-hover:scale-110 transition-transform">
           <span className="text-2xl text-stone-400">+</span>
         </div>
