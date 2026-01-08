@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { store } from "@/store/store";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { showToast } from "@/lib/toast";
 
 export default function LoginPage() {
   const [subdomain, setSubdomain] = useState("");
@@ -29,7 +30,9 @@ export default function LoginPage() {
       const tenant = store.getTenantBySubdomain(subdomain.trim().toLowerCase());
 
       if (!tenant) {
-        setError("Account not found. Please check your subdomain.");
+        const msg = "Account not found. Please check your subdomain.";
+        setError(msg);
+        showToast.error(msg);
         setIsLoading(false);
         return;
       }
@@ -37,10 +40,10 @@ export default function LoginPage() {
       // Get the owner user for this tenant
       const owner = store.getUserById(tenant.ownerId);
 
-
-
       if (!owner) {
-        setError("Account data corrupted. Please sign up again.");
+        const msg = "Account data corrupted. Please sign up again.";
+        setError(msg);
+        showToast.error(msg);
         setIsLoading(false);
         return;
       }
@@ -54,6 +57,8 @@ export default function LoginPage() {
       // Set current user and tenant
       store.setCurrentUser(owner);
       store.setCurrentTenant(tenant);
+
+      showToast.success(`Welcome back, ${owner.name}!`);
 
       // Redirect to subdomain-based dashboard
       const protocol = window.location.protocol;
@@ -74,7 +79,9 @@ export default function LoginPage() {
       
       window.location.href = dashboardUrl;
     } catch (err) {
-      setError("An error occurred. Please try again.");
+      const msg = "An error occurred. Please try again.";
+      setError(msg);
+      showToast.error(msg);
       console.error(err);
       setIsLoading(false);
     }

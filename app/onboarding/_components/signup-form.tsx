@@ -8,6 +8,7 @@ import { Tenant, User, UserRole } from "@/types/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { generateUUID } from "@/lib/uuid";
+import { showToast } from "@/lib/toast";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -57,7 +58,9 @@ export default function SignupForm() {
 
       // Validate inputs
       if (!ownerName.trim()) {
-        throw new Error("Owner name is required");
+        const msg = "Owner name is required";
+        showToast.error(msg);
+        throw new Error(msg);
       }
 
       const subdomain = subdomainName
@@ -65,11 +68,15 @@ export default function SignupForm() {
         .replaceAll(/[^a-z0-9-]/g, "");
 
       if (subdomain.length < 3) {
-        throw new Error("Subdomain must be at least 3 characters");
+        const msg = "Subdomain must be at least 3 characters";
+        showToast.error(msg);
+        throw new Error(msg);
       }
 
       if (subdomainAvailable === false) {
-        throw new Error("Subdomain is already taken");
+        const msg = "Subdomain is already taken";
+        showToast.error(msg);
+        throw new Error(msg);
       }
 
       // Create owner user
@@ -109,6 +116,8 @@ export default function SignupForm() {
         subdomain,
       });
 
+      showToast.success(`Welcome, ${ownerName}! Your wall is ready.`);
+
       // Redirect to tenant dashboard (not the public wall)
       let dashboardUrl: string;
       
@@ -136,7 +145,9 @@ export default function SignupForm() {
         globalThis.location.href = dashboardUrl;
       }, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const msg = err instanceof Error ? err.message : "An error occurred";
+      setError(msg);
+      showToast.error(msg);
       setIsLoading(false);
     }
   };

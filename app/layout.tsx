@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
+import { Toaster } from "sonner";
 import GridBackground from "@/components/grid-background";
 import { TenantProvider } from "@/store/tenant-context";
 import "./globals.css";
@@ -55,6 +56,12 @@ export default function RootLayout({
             {children}
           </TenantProvider>
         </div>
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          expand
+        />
       </body>
     </html>
   );

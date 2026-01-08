@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import CreateSpaceDialog from "@/components/create-space-dialog";
 import SpaceEditDialog from "@/components/space-edit-dialog";
+import { showToast } from "@/lib/toast";
 
 interface SpaceWithStats extends Space {
   signatureCount: number;
@@ -127,7 +128,7 @@ export default function SpacesPage() {
                       onClick={() => {
                         if (navigator.clipboard && navigator.clipboard.writeText) {
                           navigator.clipboard.writeText(spaceUrl);
-                          alert("Link copied!");
+                          showToast.success("Link copied!");
                         } else {
                           // Fallback for older browsers
                           const textarea = document.createElement("textarea");
@@ -136,7 +137,7 @@ export default function SpacesPage() {
                           textarea.select();
                           document.execCommand("copy");
                           document.body.removeChild(textarea);
-                          alert("Link copied!");
+                          showToast.success("Link copied!");
                         }
                       }}
                       className="px-3 py-1 bg-amber-700 text-white text-xs font-bold rounded hover:bg-amber-800 whitespace-nowrap transition-colors">

@@ -4,6 +4,7 @@ import { store } from "@/store/store";
 import { TenantBranding } from "@/types/types";
 import { useState, useEffect } from "react";
 import TenantBrandingDialog from "@/components/tenant-branding-dialog";
+import { showToast } from "@/lib/toast";
 
 export default function SettingsPage() {
   const [tenant, setTenant] = useState<any>(null);
@@ -63,10 +64,9 @@ export default function SettingsPage() {
         setUser(updatedUser);
       }
 
-      setMessage("✓ Settings saved successfully");
-      setTimeout(() => setMessage(""), 3000);
+      showToast.success("Settings saved successfully");
     } catch (error) {
-      setMessage("✗ Failed to save settings");
+      showToast.error("Failed to save settings");
     }
 
     setIsSaving(false);
@@ -80,8 +80,7 @@ export default function SettingsPage() {
       };
       store.saveTenant(updatedTenant);
       setTenant(updatedTenant);
-      setMessage("✓ Branding updated successfully");
-      setTimeout(() => setMessage(""), 3000);
+      showToast.success("Branding updated successfully");
     }
   };
 
@@ -295,7 +294,7 @@ export default function SettingsPage() {
                   navigator.clipboard.writeText(
                     `${tenant.subdomain}.echosign.io`
                   );
-                  alert("Copied!");
+                  showToast.success("Subdomain copied!");
                 }}
                 className="px-4 py-2 bg-amber-700 text-white text-sm font-bold rounded hover:bg-amber-800 whitespace-nowrap">
                 Copy
