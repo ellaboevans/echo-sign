@@ -71,7 +71,7 @@ export default function CreateSpaceDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Create a New Space</DialogTitle>
+          <DialogTitle className={"text-2xl"}>Create a New Space</DialogTitle>
           <DialogDescription>
             Build a wall for signatures and memories. Define its purpose and who
             can see it.
