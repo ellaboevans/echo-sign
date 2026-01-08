@@ -2,7 +2,7 @@
 import SignDialog from "@/components/sign-dialog";
 import SignatureCard from "@/components/signature-card";
 import { store } from "@/store/store";
-import { Space, SignatureEntry } from "@/types/types";
+import { Space, SignatureEntry, User } from "@/types/types";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
@@ -13,9 +13,14 @@ type Props = {
 export default function SpaceDetailView({ id }: Props) {
   const [space, setSpace] = useState<Space | null>(null);
   const [entries, setEntries] = useState<SignatureEntry[]>([]);
-  const currentUser = store.getCurrentUser();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
+    const user = store.getCurrentUser();
+    const timer = setTimeout(() => {
+      setCurrentUser(user);
+    }, 0);
+
     if (id) {
       const foundSpace = store.getSpace(id);
       if (foundSpace) {
@@ -26,7 +31,7 @@ export default function SpaceDetailView({ id }: Props) {
             .filter(
               (e) =>
                 e.spaceId === id &&
-                (e.visibility !== "private" || e.userId === currentUser?.id)
+                (e.visibility !== "private" || e.userId === user?.id)
             )
             .sort((a, b) => b.createdAt - a.createdAt);
           setEntries(allEntries);
@@ -35,7 +40,8 @@ export default function SpaceDetailView({ id }: Props) {
         return () => clearTimeout(timer);
       }
     }
-  }, [id, currentUser?.id]);
+    return () => clearTimeout(timer);
+  }, [id]);
 
   const handleDelete = (entryId: string) => {
     if (confirm("Are you sure you want to remove this memory from history?")) {
