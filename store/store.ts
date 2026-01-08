@@ -15,11 +15,13 @@ const STORAGE_KEYS = {
 };
 
 const get = <T>(key: string, defaultValue: T): T => {
+  if (typeof globalThis.window === "undefined") return defaultValue;
   const data = localStorage.getItem(key);
   return data ? JSON.parse(data) : defaultValue;
 };
 
 const set = <T>(key: string, value: T): void => {
+  if (typeof globalThis.window === "undefined") return;
   localStorage.setItem(key, JSON.stringify(value));
 };
 
@@ -31,7 +33,11 @@ export const store = {
     set(STORAGE_KEYS.CURRENT_USER, user);
   },
   getCurrentUser: () => get<User | null>(STORAGE_KEYS.CURRENT_USER, null),
-  clearCurrentUser: () => localStorage.removeItem(STORAGE_KEYS.CURRENT_USER),
+  clearCurrentUser: () => {
+    if (typeof globalThis.window !== "undefined") {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    }
+  },
 
   getSpaces: () =>
     get<Space[]>(STORAGE_KEYS.SPACES, [
