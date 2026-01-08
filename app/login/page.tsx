@@ -8,7 +8,6 @@ import { showToast } from "@/lib/toast";
 
 export default function LoginPage() {
   const [subdomain, setSubdomain] = useState("");
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
 
@@ -22,7 +21,6 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
     try {
@@ -31,7 +29,6 @@ export default function LoginPage() {
 
       if (!tenant) {
         const msg = "Account not found. Please check your subdomain.";
-        setError(msg);
         showToast.error(msg);
         setIsLoading(false);
         return;
@@ -42,7 +39,6 @@ export default function LoginPage() {
 
       if (!owner) {
         const msg = "Account data corrupted. Please sign up again.";
-        setError(msg);
         showToast.error(msg);
         setIsLoading(false);
         return;
@@ -80,7 +76,6 @@ export default function LoginPage() {
       window.location.href = dashboardUrl;
     } catch (err) {
       const msg = "An error occurred. Please try again.";
-      setError(msg);
       showToast.error(msg);
       console.error(err);
       setIsLoading(false);
@@ -103,13 +98,6 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-6">
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
-
           {/* Subdomain Input */}
           <div className="space-y-2">
             <label htmlFor="subdomain" className="block text-sm font-semibold text-stone-900">

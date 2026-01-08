@@ -19,7 +19,6 @@ export default function SignupForm() {
     ownerEmail: "",
     subdomainName: "",
   });
-  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(
     null
@@ -60,7 +59,8 @@ export default function SignupForm() {
       if (!ownerName.trim()) {
         const msg = "Owner name is required";
         showToast.error(msg);
-        throw new Error(msg);
+        setIsLoading(false);
+        return;
       }
 
       const subdomain = subdomainName
@@ -70,13 +70,15 @@ export default function SignupForm() {
       if (subdomain.length < 3) {
         const msg = "Subdomain must be at least 3 characters";
         showToast.error(msg);
-        throw new Error(msg);
+        setIsLoading(false);
+        return;
       }
 
       if (subdomainAvailable === false) {
         const msg = "Subdomain is already taken";
         showToast.error(msg);
-        throw new Error(msg);
+        setIsLoading(false);
+        return;
       }
 
       // Create owner user
@@ -146,7 +148,6 @@ export default function SignupForm() {
       }, 500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "An error occurred";
-      setError(msg);
       showToast.error(msg);
       setIsLoading(false);
     }
@@ -222,13 +223,6 @@ export default function SignupForm() {
           <p className="text-xs text-red-600 font-semibold">✗ Already taken</p>
         )}
       </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-          {error}
-        </div>
-      )}
 
       {/* Submit Button */}
       <Button

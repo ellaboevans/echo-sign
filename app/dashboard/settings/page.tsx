@@ -11,7 +11,6 @@ export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState("");
   const [showBrandingDialog, setShowBrandingDialog] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -161,18 +160,6 @@ export default function SettingsPage() {
               Optional description visible on your tenant homepage
             </p>
           </div>
-
-          {/* Message */}
-          {message && (
-            <div
-              className={`p-3 rounded-lg text-sm font-bold ${
-                message.startsWith("✓")
-                  ? "bg-green-50 text-green-700"
-                  : "bg-red-50 text-red-700"
-              }`}>
-              {message}
-            </div>
-          )}
 
           {/* Submit */}
           <button
