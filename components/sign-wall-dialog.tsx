@@ -1,6 +1,11 @@
 "use client";
-import SignatureCanvas from "@/components/signature-canvas";
-import { Input } from "@/components/ui/input";
+
+import { useState } from "react";
+import { store } from "@/store/store";
+import { Tenant, Space, Visibility, SignatureEntry } from "@/types/types";
+import SignatureCanvas from "./signature-canvas";
+import { Input } from "./ui/input";
+import { generateUUID } from "@/lib/uuid";
 import {
   Select,
   SelectContent,
@@ -8,7 +13,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "./ui/select";
 import {
   Dialog,
   DialogContent,
@@ -16,24 +21,26 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { store } from "@/store/store";
-import { Space, Visibility } from "@/types/types";
-import { useState } from "react";
-import { generateUUID } from "@/lib/uuid";
+} from "./ui/dialog";
 
-interface SignDialogProps {
-  space: Space;
+interface SignWallDialogProps {
+  tenant?: Tenant;
+  space?: Space;
+  onSigned?: () => void;
 }
 
-export default function SignDialog({ space }: Readonly<SignDialogProps>) {
+export default function SignWallDialog({
+  tenant,
+  space,
+  onSigned,
+}: Readonly<SignWallDialogProps>) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(() => store.getCurrentUser()?.name || "");
-  const [email, setEmail] = useState(() => store.getCurrentUser()?.email || "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [memory, setMemory] = useState("");
   const [visibility, setVisibility] = useState<Visibility>(Visibility.PUBLIC);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [_, setSignatureData] = useState<string | null>(null);
+  const [signatureData, setSignatureData] = useState<string | null>(null);
 
   const handleSave = async (data: string) => {
     setSignatureData(data);
@@ -44,40 +51,47 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
 
     setIsSubmitting(true);
 
-    let user = store.getCurrentUser();
-    if (user?.name !== name) {
-      user = {
+    try {
+      if (!tenant || !space) {
+        throw new Error("Tenant or space not found");
+      }
+
+      // Create entry (guest or user)
+      const entry: SignatureEntry = {
         id: generateUUID(),
-        name: name,
-        email: email,
+        tenantId: tenant.id,
+        spaceId: space.id,
+        userId: undefined, // Guest signatures don't have user ID
+        userName: name,
+        userEmail: email || undefined,
+        signatureData: data,
+        memoryText: memory.trim() || undefined,
+        visibility: visibility,
         createdAt: Date.now(),
       };
-      store.saveUser(user);
-    }
 
-    const entry = {
-      id: generateUUID(),
-      spaceId: space.id,
-      userId: user.id,
-      userName: user.name,
-      signatureData: data,
-      memoryText: memory.trim() || undefined,
-      visibility: visibility,
-      createdAt: Date.now(),
-    };
+      store.saveEntry(entry);
+      store.track(tenant.id, "sign_wall", { spaceId: space.id, visibility });
 
-    store.saveEntry(entry);
-    store.track("sign_space", { spaceId: space.id, visibility });
-
-    setTimeout(() => {
+      // Callback and reset
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setOpen(false);
+        setName("");
+        setEmail("");
+        setMemory("");
+        setVisibility(Visibility.PUBLIC);
+        setSignatureData(null);
+        
+        if (onSigned) {
+          onSigned();
+        }
+      }, 500);
+    } catch (error) {
+      console.error("Error saving signature:", error);
+      alert("Failed to save signature. Please try again.");
       setIsSubmitting(false);
-      setOpen(false);
-      setName(user.name);
-      setEmail(user.email || "");
-      setMemory("");
-      setVisibility(Visibility.PUBLIC);
-      setSignatureData(null);
-    }, 500);
+    }
   };
 
   return (
@@ -87,12 +101,11 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className={"text-2xl"}>
-            Signing the &ldquo;{space.name}&rdquo;
+          <DialogTitle className="text-2xl">
+            Signing &ldquo;{space?.name || tenant?.displayName}&rdquo;
           </DialogTitle>
           <DialogDescription>
-            Your signature and memory will be permanently archived in this
-            space.
+            Your signature and memory will be permanently archived in this wall.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +123,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="How should you be remembered?"
-                className="w-full rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm"
+                className="w-full"
                 required
               />
             </div>
@@ -126,7 +139,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="For recovery (never public)"
-                className="w-full rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm"
+                className="w-full"
               />
             </div>
           </div>
@@ -172,7 +185,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                         Unlisted
                       </SelectItem>
                       <SelectItem value={Visibility.PRIVATE}>
-                        Private (Owner Only)
+                        Private
                       </SelectItem>
                     </SelectGroup>
                   </SelectContent>

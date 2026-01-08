@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import GridBackground from "@/components/grid-background";
+import { TenantProvider } from "@/store/tenant-context";
 import "./globals.css";
 
 import { Grape_Nuts, Crimson_Text } from "next/font/google";
@@ -50,7 +51,9 @@ export default function RootLayout({
         className={`antialiased relative`}>
         <GridBackground />
         <div className="relative z-10">
-          {children}
+          <TenantProvider>
+            {children}
+          </TenantProvider>
         </div>
       </body>
     </html>

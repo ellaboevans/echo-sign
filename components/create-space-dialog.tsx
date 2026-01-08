@@ -10,7 +10,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { store } from "@/store/store";
-import { Visibility } from "@/types/types";
+import { Space, Visibility } from "@/types/types";
+import { generateUUID } from "@/lib/uuid";
 import { cn } from "@/lib/utils";
 
 interface CreateSpaceDialogProps {
@@ -34,21 +35,31 @@ export default function CreateSpaceDialog({
 
     setIsSubmitting(true);
 
-    const currentUser = store.getCurrentUser();
-    const space = {
-      id:
-        name.toLowerCase().replaceAll(/[^a-z0-9]/g, "-") +
-        "-" +
-        Math.random().toString(36).substring(2, 7),
+    const tenant = store.getCurrentTenant();
+    if (!tenant) {
+      alert("No tenant found. Please sign in first.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Generate URL-friendly slug
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    const space: Space = {
+      id: generateUUID(),
+      tenantId: tenant.id,
       name: name.trim(),
+      slug,
       description: description.trim() || undefined,
-      creatorId: currentUser?.id || "anonymous",
+      visibility,
       createdAt: Date.now(),
-      visibility: visibility,
     };
 
     store.saveSpace(space);
-    store.track("create_space", { spaceId: space.id });
+    store.track(tenant.id, "create_space", { slug });
 
     setTimeout(() => {
       setIsSubmitting(false);
@@ -56,7 +67,7 @@ export default function CreateSpaceDialog({
       setName("");
       setDescription("");
       setVisibility(Visibility.PUBLIC);
-      globalThis.location.href = `/space/${space.id}`;
+      globalThis.location.href = `/${slug}`;
     }, 300);
   };
 
