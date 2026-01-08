@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import GridBackground from "./grid-background";
 
 export default function LandingProfessional() {
   const containerVariants = {
@@ -23,9 +24,10 @@ export default function LandingProfessional() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 via-white to-amber-50">
+    <div className="relative min-h-screen bg-gradient-to-br from-stone-50 via-white to-amber-50">
+      <GridBackground />
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center px-4 py-20">
+      <section className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
         <motion.div
           className="max-w-4xl text-center space-y-8"
           variants={containerVariants}
@@ -33,8 +35,8 @@ export default function LandingProfessional() {
           animate="visible">
           {/* Badge */}
           <motion.div variants={itemVariants} className="inline-block">
-            <span className="px-4 py-2 bg-amber-100 text-amber-900 text-sm font-semibold rounded-full">
-              ✍️ Preserve Memories. Build Legacies.
+            <span className="px-6 py-2.5 border border-amber-200 text-amber-900 text-xs font-semibold tracking-wider rounded-full bg-gradient-to-r from-amber-50/50 to-transparent hover:border-amber-300 transition-colors">
+              PRESERVE MEMORIES. BUILD LEGACIES.
             </span>
           </motion.div>
 
@@ -49,8 +51,9 @@ export default function LandingProfessional() {
           <motion.p
             variants={itemVariants}
             className="text-xl md:text-2xl text-stone-600 font-serif italic max-w-2xl mx-auto">
-            Create digital signature walls where communities, families, and colleagues leave their mark. 
-            Preserve memories that matter. Build legacies that last.
+            Create digital signature walls where communities, families, and
+            colleagues leave their mark. Preserve memories that matter. Build
+            legacies that last.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -79,7 +82,7 @@ export default function LandingProfessional() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 px-4 bg-white">
+      <section className="relative z-10 py-24 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <motion.div
             className="text-center space-y-4 mb-16"
@@ -155,7 +158,7 @@ export default function LandingProfessional() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-24 px-4">
+      <section className="relative z-10 py-24 px-4">
         <div className="max-w-6xl mx-auto">
           <motion.div
             className="text-center space-y-4 mb-16"
@@ -225,7 +228,7 @@ export default function LandingProfessional() {
       </section>
 
       {/* Use Cases Section */}
-      <section className="py-24 px-4 bg-stone-900">
+      <section className="relative z-10 py-24 px-4 bg-stone-900">
         <div className="max-w-6xl mx-auto">
           <motion.div
             className="text-center space-y-4 mb-16"
@@ -237,7 +240,8 @@ export default function LandingProfessional() {
               Designed for Every Moment
             </h2>
             <p className="text-lg text-stone-300 max-w-2xl mx-auto">
-              Whether celebrating, remembering, or building community—Echo Sign is your archive.
+              Whether celebrating, remembering, or building community—Echo Sign
+              is your archive.
             </p>
           </motion.div>
 
@@ -294,7 +298,7 @@ export default function LandingProfessional() {
       </section>
 
       {/* Values Section */}
-      <section className="py-24 px-4 bg-gradient-to-br from-amber-50 to-stone-50">
+      <section className="relative z-10 py-24 px-4 bg-gradient-to-br from-amber-50 to-stone-50">
         <div className="max-w-4xl mx-auto">
           <motion.div
             className="text-center space-y-4 mb-16"
@@ -316,7 +320,8 @@ export default function LandingProfessional() {
             {[
               {
                 title: "Authenticity",
-                description: "Real signatures. Real stories. No engagement metrics. Just genuine moments.",
+                description:
+                  "Real signatures. Real stories. No engagement metrics. Just genuine moments.",
               },
               {
                 title: "Permanence",
@@ -344,7 +349,7 @@ export default function LandingProfessional() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-24 px-4">
+      <section className="relative z-10 py-24 px-4">
         <motion.div
           className="max-w-2xl mx-auto text-center space-y-8"
           initial={{ opacity: 0, y: 20 }}
@@ -355,7 +360,7 @@ export default function LandingProfessional() {
             Ready to Create Your Legacy?
           </h2>
           <p className="text-lg text-stone-600">
-            Join communities building digital monuments to moments that matter. 
+            Join communities building digital monuments to moments that matter.
             Your first wall awaits.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
@@ -374,7 +379,7 @@ export default function LandingProfessional() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-stone-200 bg-stone-50 py-12 px-4">
+      <footer className="relative z-10 border-t border-stone-200 bg-stone-50 py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
