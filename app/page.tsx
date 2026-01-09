@@ -1,6 +1,13 @@
 "use client";
 
-import LandingHero from "@/components/landing-hero";
+import GridBackground from "@/components/grid-background";
+import FeaturesSection from "@/components/landing/features-section";
+import FinalCtaSection from "@/components/landing/final-cta-section";
+import FooterSection from "@/components/landing/footer-section";
+import HeroSection from "@/components/landing/hero-section";
+import HowItWorksSection from "@/components/landing/how-it-works-section";
+import UseCasesSection from "@/components/landing/use-cases-section";
+import ValuesSection from "@/components/landing/values-section";
 import TenantWallView from "@/components/tenant-wall-view";
 import { useEffect, useState } from "react";
 
@@ -9,42 +16,35 @@ export default function RootPage() {
   const [hasSubdomain, setHasSubdomain] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof globalThis === "undefined") return;
 
-    const host = window.location.hostname;
-    const parts = host.split(".");
+    const host = globalThis.location.hostname;
     let subdomain: string | null = null;
 
-    // Detect if this is a subdomain
-    // lvh.me → no subdomain
-    // example.lvh.me → subdomain = "example"
-    // example.echosign.io → subdomain = "example"
-    // localhost → no subdomain
-    // cs.localhost → no subdomain
-    
-    if (host === "localhost" || host === "127.0.0.1" || host.startsWith("127.")) {
-      // Plain localhost/127.0.0.1
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host.startsWith("127.")
+    ) {
       subdomain = null;
     } else if (host === "lvh.me") {
-      // Just the base domain
       subdomain = null;
     } else if (host.endsWith(".lvh.me")) {
-      // Subdomain on lvh.me: example.lvh.me → "example"
       subdomain = host.replace(".lvh.me", "");
     } else if (host.includes(".")) {
-      // Other domains: check if it's a subdomain
       const parts = host.split(".");
       if (parts.length > 2) {
-        // Has subdomain: cs.echosign.io → "cs"
         subdomain = parts[0];
       } else if (parts.length === 2 && parts[0] !== "www") {
-        // Could be subdomain on 2-letter TLD, but assume it's just base domain
         subdomain = null;
       }
     }
 
-    setHasSubdomain(!!subdomain);
-    setIsReady(true);
+    const timer = setTimeout(() => {
+      setHasSubdomain(!!subdomain);
+      setIsReady(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   if (!isReady) {
@@ -57,5 +57,16 @@ export default function RootPage() {
   }
 
   // Otherwise, show landing page
-  return <LandingHero />;
+  return (
+    <div className="relative min-h-screen bg-linear-to-br from-stone-50 via-white to-amber-50">
+      <GridBackground />
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <UseCasesSection />
+      <ValuesSection />
+      <FinalCtaSection />
+      <FooterSection />
+    </div>
+  );
 }
