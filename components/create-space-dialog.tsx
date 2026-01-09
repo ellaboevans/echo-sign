@@ -45,8 +45,8 @@ export default function CreateSpaceDialog({
     // Generate URL-friendly slug
     const slug = name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replaceAll(/[^a-z0-9]+/g, "-")
+      .replaceAll(/^-|-$/g, "");
 
     const space: Space = {
       id: generateUUID(),

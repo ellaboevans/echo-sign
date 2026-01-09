@@ -1,8 +1,35 @@
 "use client";
 
 import { store } from "@/store/store";
-import { SignatureEntry } from "@/types/types";
+import { SignatureEntry, Space, Tenant } from "@/types/types";
 import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Users,
+  Eye,
+  Lock,
+  Trash2,
+  Calendar,
+  Mail,
+  MessageSquare,
+  Loader2,
+  Filter,
+} from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 interface EntryWithSpace extends SignatureEntry {
   spaceName: string;
@@ -10,21 +37,28 @@ interface EntryWithSpace extends SignatureEntry {
 }
 
 export default function EntriesPage() {
-  const [tenant, setTenant] = useState<any>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [entries, setEntries] = useState<EntryWithSpace[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<EntryWithSpace[]>([]);
-  const [filterSpace, setFilterSpace] = useState<string>("all");
-  const [filterVisibility, setFilterVisibility] = useState<string>("all");
-  const [spaces, setSpaces] = useState<any[]>([]);
+  const [filterSpace, setFilterSpace] = useState<string | null>("all");
+  const [filterVisibility, setFilterVisibility] = useState<string | null>(
+    "all"
+  );
+  const [spaces, setSpaces] = useState<Space[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     const currentTenant = store.getCurrentTenant();
-    setTenant(currentTenant);
+    timer = setTimeout(() => {
+      setTenant(currentTenant);
+    }, 0);
 
     if (currentTenant) {
       const tenantSpaces = store.getSpacesByTenant(currentTenant.id);
-      setSpaces(tenantSpaces);
+      timer = setTimeout(() => {
+        setSpaces(tenantSpaces);
+      }, 0);
 
       const tenantEntries = store.getEntriesByTenant(currentTenant.id);
       const entriesWithSpace = tenantEntries.map((entry) => {
@@ -35,9 +69,15 @@ export default function EntriesPage() {
           spaceSlug: space?.slug || "",
         };
       });
-      setEntries(entriesWithSpace);
+      timer = setTimeout(() => {
+        setEntries(entriesWithSpace);
+      }, 0);
     }
-    setIsLoading(false);
+    timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -51,7 +91,11 @@ export default function EntriesPage() {
       filtered = filtered.filter((e) => e.visibility === filterVisibility);
     }
 
-    setFilteredEntries(filtered);
+    const timer = setTimeout(() => {
+      setFilteredEntries(filtered);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [entries, filterSpace, filterVisibility]);
 
   const handleDeleteEntry = (entryId: string) => {
@@ -62,159 +106,242 @@ export default function EntriesPage() {
   };
 
   if (isLoading || !tenant) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   const activeEntries = filteredEntries.filter((e) => !e.deletedAt);
+  const publicCount = activeEntries.filter(
+    (e) => e.visibility === "public"
+  ).length;
+  const privateCount = activeEntries.filter(
+    (e) => e.visibility === "private"
+  ).length;
+
+  const getVisibilityBadge = (visibility: string) => {
+    switch (visibility) {
+      case "public":
+        return (
+          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+            Public
+          </Badge>
+        );
+      case "private":
+        return <Badge variant="destructive">Private</Badge>;
+      case "unlisted":
+        return <Badge variant="secondary">Unlisted</Badge>;
+      default:
+        return <Badge variant="outline">{visibility}</Badge>;
+    }
+  };
 
   return (
-    <div className="space-y-8">
+    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-stone-900">Signatures</h1>
-        <p className="text-stone-600 mt-2">
+        <h2 className="text-3xl font-bold tracking-tight">Signatures</h2>
+        <p className="text-muted-foreground">
           View and manage all signatures across your spaces
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-6">
-          <div className="text-3xl font-bold text-blue-700">
-            {activeEntries.length}
-          </div>
-          <p className="text-sm text-stone-600 mt-1">Total Signatures</p>
-          <p className="text-xs text-stone-500 mt-2">Active entries</p>
-        </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Signatures
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeEntries.length}</div>
+            <p className="text-xs text-muted-foreground">Active entries</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-lg border border-stone-200 p-6">
-          <div className="text-3xl font-bold text-green-700">
-            {activeEntries.filter((e) => e.visibility === "public").length}
-          </div>
-          <p className="text-sm text-stone-600 mt-1">Public Signatures</p>
-          <p className="text-xs text-stone-500 mt-2">Visible to everyone</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Public Signatures
+            </CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{publicCount}</div>
+            <p className="text-xs text-muted-foreground">Visible to everyone</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-lg border border-stone-200 p-6">
-          <div className="text-3xl font-bold text-amber-700">
-            {activeEntries.filter((e) => e.visibility === "private").length}
-          </div>
-          <p className="text-sm text-stone-600 mt-1">Private Signatures</p>
-          <p className="text-xs text-stone-500 mt-2">Owner only</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Private Signatures
+            </CardTitle>
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{privateCount}</div>
+            <p className="text-xs text-muted-foreground">Owner only</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
-      <div className="bg-white border border-stone-200 rounded-lg p-6 space-y-4">
-        <h2 className="text-lg font-bold text-stone-900">Filters</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            <CardTitle>Filters</CardTitle>
+          </div>
+          <CardDescription>
+            Filter signatures by space and visibility
+          </CardDescription>
+        </CardHeader>
+        <CardContent className=" flex gap-4">
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-stone-400 block">
+            <label htmlFor="space" className="text-sm font-medium">
               Space
             </label>
-            <select
+            <Select
+              id="space"
               value={filterSpace}
-              onChange={(e) => setFilterSpace(e.target.value)}
-              className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700">
-              <option value="all">All Spaces</option>
-              {spaces.map((space) => (
-                <option key={space.id} value={space.id}>
-                  {space.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={setFilterSpace}>
+              <SelectTrigger className="w-32">
+                {filterSpace === "all"
+                  ? "All Spaces"
+                  : spaces.find((space) => space.id === filterSpace)?.name}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Spaces</SelectItem>
+                {spaces.map((space) => (
+                  <SelectItem key={space.id} value={space.id}>
+                    {space.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-stone-400 block">
+            <label htmlFor="visibility" className="text-sm font-medium">
               Visibility
             </label>
-            <select
+            <Select
+              id="visibility"
               value={filterVisibility}
-              onChange={(e) => setFilterVisibility(e.target.value)}
-              className="w-full px-3 py-2 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700">
-              <option value="all">All Visibility Levels</option>
-              <option value="public">Public</option>
-              <option value="unlisted">Unlisted</option>
-              <option value="private">Private</option>
-            </select>
+              onValueChange={setFilterVisibility}>
+              <SelectTrigger className="w-32">
+                {filterVisibility === "all"
+                  ? "All Visibility Levels"
+                  : `${filterVisibility
+                      ?.charAt(0)
+                      .toUpperCase()}${filterVisibility?.slice(1)}`}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Visibility Levels</SelectItem>
+                <SelectItem value="public">Public</SelectItem>
+                <SelectItem value="unlisted">Unlisted</SelectItem>
+                <SelectItem value="private">Private</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Entries List */}
       {activeEntries.length > 0 ? (
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-stone-900">
-            {activeEntries.length} Signature{activeEntries.length !== 1 ? "s" : ""}
-          </h2>
-          <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">
+              {activeEntries.length} Signature
+              {activeEntries.length === 1 ? "" : "s"}
+            </h3>
+          </div>
+          <div className="grid grid-cols-3  gap-4">
             {activeEntries.map((entry) => (
-              <div
+              <Card
                 key={entry.id}
-                className="bg-white border border-stone-200 rounded-lg p-6 space-y-3">
-                {/* Header */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-bold text-stone-900">{entry.userName}</h3>
-                    <p className="text-sm text-stone-600 mt-1">
-                      Signed: <strong>{entry.spaceName}</strong>
-                    </p>
-                    {entry.userEmail && (
-                      <p className="text-xs text-stone-500 mt-1">{entry.userEmail}</p>
-                    )}
+                className="hover:shadow-lg hover:outline outline-amber-700 duration-200 ease-in">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <CardTitle className="text-lg">
+                        {entry.userName}
+                      </CardTitle>
+                      <CardDescription>
+                        Signed:{" "}
+                        <span className="font-medium text-foreground">
+                          {entry.spaceName}
+                        </span>
+                      </CardDescription>
+                      {entry.userEmail && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground pt-1">
+                          <Mail className="h-3 w-3" />
+                          {entry.userEmail}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getVisibilityBadge(entry.visibility)}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded ${
-                      entry.visibility === "public"
-                        ? "bg-green-100 text-green-700"
-                        : entry.visibility === "private"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-amber-100 text-amber-700"
-                    }`}>
-                      {entry.visibility}
-                    </span>
-                  </div>
-                </div>
+                </CardHeader>
 
-                {/* Memory */}
                 {entry.memoryText && (
-                  <div className="bg-stone-50 p-4 rounded-lg border border-stone-100">
-                    <p className="text-sm text-stone-700 italic">
-                      "{entry.memoryText}"
-                    </p>
-                  </div>
+                  <>
+                    <Separator />
+                    <CardContent className="py-4 h-full bg-gray-100">
+                      <div className="flex gap-3">
+                        <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <p className="text-sm text-muted-foreground italic">
+                          &ldquo;{entry.memoryText}&rdquo;
+                        </p>
+                      </div>
+                    </CardContent>
+                  </>
                 )}
 
-                {/* Metadata & Actions */}
-                <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-                  <span className="text-xs text-stone-500">
-                    {new Date(entry.createdAt).toLocaleDateString()} at{" "}
-                    {new Date(entry.createdAt).toLocaleTimeString()}
-                  </span>
-                  <button
-                    onClick={() => handleDeleteEntry(entry.id)}
-                    className="px-4 py-2 bg-red-50 text-red-700 text-sm font-bold rounded hover:bg-red-100 transition-colors">
-                    Delete
-                  </button>
-                </div>
-              </div>
+                <Separator />
+                <CardContent className="pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>
+                        {new Date(entry.createdAt).toLocaleDateString()} at{" "}
+                        {new Date(entry.createdAt).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteEntry(entry.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       ) : (
-        <div className="p-8 bg-stone-50 border-2 border-dashed border-stone-200 rounded-lg text-center">
-          <p className="text-stone-500 mb-2">
-            {entries.length === 0
-              ? "No signatures yet"
-              : "No signatures match your filters"}
-          </p>
-          <p className="text-xs text-stone-400">
-            {entries.length === 0
-              ? "Once guests sign your spaces, they'll appear here"
-              : "Try adjusting your filters"}
-          </p>
-        </div>
+        <Card className="border-dashed">
+          <CardHeader className="text-center pb-4">
+            <CardTitle>
+              {entries.length === 0
+                ? "No signatures yet"
+                : "No signatures match your filters"}
+            </CardTitle>
+            <CardDescription>
+              {entries.length === 0
+                ? "Once guests sign your spaces, they'll appear here"
+                : "Try adjusting your filters"}
+            </CardDescription>
+          </CardHeader>
+        </Card>
       )}
     </div>
   );

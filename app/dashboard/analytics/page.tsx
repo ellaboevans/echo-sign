@@ -2,6 +2,26 @@
 
 import { store } from "@/store/store";
 import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  LayoutGrid,
+  Users,
+  Eye,
+  TrendingUp,
+  Calendar,
+  Loader2,
+  Lightbulb,
+  Activity,
+} from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Tenant } from "@/types/types";
 
 interface SpaceAnalytics {
   spaceId: string;
@@ -13,15 +33,26 @@ interface SpaceAnalytics {
   lastSigned?: number;
 }
 
+interface TotalStats {
+  totalSpaces: number;
+  totalSignatures: number;
+  totalViews: number;
+  totalSigns: number;
+  avgSignaturesPerSpace: string | number;
+}
+
 export default function AnalyticsPage() {
-  const [tenant, setTenant] = useState<any>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [spaceAnalytics, setSpaceAnalytics] = useState<SpaceAnalytics[]>([]);
-  const [totalStats, setTotalStats] = useState<any>(null);
+  const [totalStats, setTotalStats] = useState<TotalStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     const currentTenant = store.getCurrentTenant();
-    setTenant(currentTenant);
+    timer = setTimeout(() => {
+      setTenant(currentTenant);
+    }, 0);
 
     if (currentTenant) {
       // Get all spaces for this tenant
@@ -40,7 +71,7 @@ export default function AnalyticsPage() {
         const spaceSigns = analytics.filter(
           (a) => a.type === "sign_space" && a.metadata?.spaceId === space.id
         ).length;
-        const lastEntry = spaceEntries.sort(
+        const lastEntry = spaceEntries.toSorted(
           (a, b) => b.createdAt - a.createdAt
         )[0];
 
@@ -56,27 +87,37 @@ export default function AnalyticsPage() {
         };
       });
 
-      setSpaceAnalytics(analytics_data);
+      timer = setTimeout(() => {
+        setSpaceAnalytics(analytics_data);
+
+        setTotalStats({
+          totalSpaces: spaces.length,
+          totalSignatures: entries.filter((e) => !e.deletedAt).length,
+          totalViews: analytics.filter((a) => a.type === "view_space").length,
+          totalSigns: analytics.filter((a) => a.type === "sign_space").length,
+          avgSignaturesPerSpace:
+            spaces.length > 0
+              ? (
+                  entries.filter((e) => !e.deletedAt).length / spaces.length
+                ).toFixed(1)
+              : 0,
+        });
+      }, 0);
 
       // Calculate total stats
-      setTotalStats({
-        totalSpaces: spaces.length,
-        totalSignatures: entries.filter((e) => !e.deletedAt).length,
-        totalViews: analytics.filter((a) => a.type === "view_space").length,
-        totalSigns: analytics.filter((a) => a.type === "sign_space").length,
-        avgSignaturesPerSpace:
-          spaces.length > 0
-            ? (entries.filter((e) => !e.deletedAt).length / spaces.length).toFixed(
-                1
-              )
-            : 0,
-      });
     }
-    setIsLoading(false);
+    timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   if (isLoading || !tenant || !totalStats) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   const sortedSpaces = [...spaceAnalytics].sort(
@@ -84,176 +125,224 @@ export default function AnalyticsPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-stone-900">Analytics</h1>
-        <p className="text-stone-600 mt-2">
+        <h2 className="text-3xl font-bold tracking-tight">Analytics</h2>
+        <p className="text-muted-foreground">
           Overview of your spaces and visitor activity
         </p>
       </div>
 
       {/* Overall Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-6">
-          <div className="text-3xl font-bold text-amber-700">
-            {totalStats.totalSpaces}
-          </div>
-          <p className="text-sm text-stone-600 mt-1">Total Spaces</p>
-        </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Spaces</CardTitle>
+            <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalStats.totalSpaces}</div>
+            <p className="text-xs text-muted-foreground">
+              Active walls created
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-lg border border-stone-200 p-6">
-          <div className="text-3xl font-bold text-blue-700">
-            {totalStats.totalSignatures}
-          </div>
-          <p className="text-sm text-stone-600 mt-1">Total Signatures</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Signatures
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalStats.totalSignatures}
+            </div>
+            <p className="text-xs text-muted-foreground">Across all spaces</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-lg border border-stone-200 p-6">
-          <div className="text-3xl font-bold text-green-700">
-            {totalStats.totalViews}
-          </div>
-          <p className="text-sm text-stone-600 mt-1">Total Views</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalStats.totalViews}</div>
+            <p className="text-xs text-muted-foreground">Wall page visits</p>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-lg border border-stone-200 p-6">
-          <div className="text-3xl font-bold text-purple-700">
-            {totalStats.avgSignaturesPerSpace}
-          </div>
-          <p className="text-sm text-stone-600 mt-1">Avg per Space</p>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg per Space</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalStats.avgSignaturesPerSpace}
+            </div>
+            <p className="text-xs text-muted-foreground">Average signatures</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Per-Space Analytics */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-stone-900">Per-Space Breakdown</h2>
-        
+        <div className="flex items-center gap-2">
+          <Activity className="h-5 w-5" />
+          <h3 className="text-xl font-semibold">Per-Space Breakdown</h3>
+        </div>
+
         {sortedSpaces.length > 0 ? (
-          <div className="space-y-3">
-            {sortedSpaces.map((space) => (
-              <div
-                key={space.spaceId}
-                className="bg-white border border-stone-200 rounded-lg p-6">
-                {/* Space Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-stone-900">
-                      {space.spaceName}
-                    </h3>
-                    {space.lastSigned && (
-                      <p className="text-xs text-stone-500 mt-1">
-                        Last signed:{" "}
-                        {new Date(space.lastSigned).toLocaleDateString()}
-                      </p>
+          <div className="grid gap-4">
+            {sortedSpaces.map((space) => {
+              const conversionRate =
+                space.views > 0 && space.signs > 0
+                  ? ((space.signs / space.views) * 100).toFixed(1)
+                  : 0;
+
+              return (
+                <Card key={space.spaceId}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle>{space.spaceName}</CardTitle>
+                        {space.lastSigned && (
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            <span>
+                              Last signed:{" "}
+                              {new Date(space.lastSigned).toLocaleDateString()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {space.signatureCount > 0 && (
+                        <Badge variant="secondary">
+                          {space.signatureCount} signatures
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">
+                          Signatures
+                        </p>
+                        <p className="text-2xl font-bold">
+                          {space.signatureCount}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Public</p>
+                        <p className="text-2xl font-bold">
+                          {space.publicCount}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Views</p>
+                        <p className="text-2xl font-bold">{space.views}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Signups</p>
+                        <p className="text-2xl font-bold">{space.signs}</p>
+                      </div>
+                    </div>
+
+                    {/* Conversion Rate */}
+                    {space.views > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Conversion Rate
+                          </span>
+                          <span className="font-medium">{conversionRate}%</span>
+                        </div>
+                        <Progress
+                          value={Number(conversionRate)}
+                          className="h-2"
+                        />
+                      </div>
                     )}
-                  </div>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-blue-700">
-                      {space.signatureCount}
-                    </div>
-                    <p className="text-xs text-stone-600 mt-1">Signatures</p>
-                  </div>
-
-                  <div className="bg-green-50 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-green-700">
-                      {space.publicCount}
-                    </div>
-                    <p className="text-xs text-stone-600 mt-1">Public</p>
-                  </div>
-
-                  <div className="bg-purple-50 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-purple-700">
-                      {space.views}
-                    </div>
-                    <p className="text-xs text-stone-600 mt-1">Views</p>
-                  </div>
-
-                  <div className="bg-amber-50 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-amber-700">
-                      {space.signs}
-                    </div>
-                    <p className="text-xs text-stone-600 mt-1">Signups</p>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                {space.views > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-stone-600">Conversion Rate</span>
-                      <span className="font-bold text-stone-700">
-                        {space.signs > 0
-                          ? ((space.signs / space.views) * 100).toFixed(1)
-                          : 0}
-                        %
-                      </span>
-                    </div>
-                    <div className="w-full bg-stone-200 rounded-full h-2">
-                      <div
-                        className="bg-amber-700 h-2 rounded-full transition-all"
-                        style={{
-                          width: `${
-                            space.signs > 0
-                              ? (space.signs / space.views) * 100
-                              : 0
-                          }%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
-          <div className="p-8 bg-stone-50 border-2 border-dashed border-stone-200 rounded-lg text-center">
-            <p className="text-stone-500">No spaces created yet</p>
-            <p className="text-xs text-stone-400 mt-1">
-              Create a space to start tracking analytics
-            </p>
-          </div>
+          <Card className="border-dashed">
+            <CardHeader className="text-center pb-4">
+              <CardTitle>No spaces created yet</CardTitle>
+              <CardDescription>
+                Create a space to start tracking analytics
+              </CardDescription>
+            </CardHeader>
+          </Card>
         )}
       </div>
 
       {/* Insights */}
       {spaceAnalytics.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 space-y-3">
-          <h3 className="font-bold text-blue-900">Insights</h3>
-          <ul className="space-y-2 text-sm text-blue-800">
-            {sortedSpaces[0]?.signatureCount === 0 && (
-              <li>
-                • Your most popular space,{" "}
-                <strong>{sortedSpaces[0]?.spaceName}</strong>, hasn't received
-                any signatures yet. Consider sharing it with more people!
-              </li>
-            )}
-            {sortedSpaces[0]?.signatureCount > 0 && (
-              <li>
-                • Your most popular space,{" "}
-                <strong>{sortedSpaces[0]?.spaceName}</strong>, has{" "}
-                {sortedSpaces[0]?.signatureCount} signature
-                {sortedSpaces[0]?.signatureCount !== 1 ? "s" : ""}.
-              </li>
-            )}
-            {totalStats.totalViews > totalStats.totalSigns && (
-              <li>
-                • Your spaces have {totalStats.totalViews} views but only{" "}
-                {totalStats.totalSigns} signatures. Share your links to increase
-                conversions!
-              </li>
-            )}
-            {totalStats.totalSpaces > 1 && (
-              <li>
-                • You have {totalStats.totalSpaces} spaces. Try creating a
-                unique experience for each one!
-              </li>
-            )}
-          </ul>
-        </div>
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-blue-600" />
+              <CardTitle className="text-blue-900">Insights</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm text-blue-800">
+              {sortedSpaces[0]?.signatureCount === 0 && (
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>
+                    Your most popular space,{" "}
+                    <strong>{sortedSpaces[0]?.spaceName}</strong>, hasn&pos;t
+                    received any signatures yet. Consider sharing it with more
+                    people!
+                  </span>
+                </li>
+              )}
+              {sortedSpaces[0]?.signatureCount > 0 && (
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>
+                    Your most popular space,{" "}
+                    <strong>{sortedSpaces[0]?.spaceName}</strong>, has{" "}
+                    {sortedSpaces[0]?.signatureCount} signature
+                    {sortedSpaces[0]?.signatureCount === 1 ? "" : "s"}.
+                  </span>
+                </li>
+              )}
+              {totalStats.totalViews > totalStats.totalSigns && (
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>
+                    Your spaces have {totalStats.totalViews} views but only{" "}
+                    {totalStats.totalSigns} signature
+                    {totalStats.totalSigns === 1 ? "" : "s"}. Share your links
+                    to increase conversions!
+                  </span>
+                </li>
+              )}
+              {totalStats.totalSpaces > 1 && (
+                <li className="flex gap-2">
+                  <span>•</span>
+                  <span>
+                    You have {totalStats.totalSpaces} spaces. Try creating a
+                    unique experience for each one!
+                  </span>
+                </li>
+              )}
+            </ul>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

@@ -1,12 +1,42 @@
 "use client";
 
 import { store } from "@/store/store";
-import { Space } from "@/types/types";
+import { Space, Tenant } from "@/types/types";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import CreateSpaceDialog from "@/components/create-space-dialog";
 import SpaceEditDialog from "@/components/space-edit-dialog";
 import { showToast } from "@/lib/toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  MoreVertical,
+  Copy,
+  ExternalLink,
+  Edit,
+  Trash2,
+  Users,
+  Eye,
+  Calendar,
+  Loader2,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+} from "@/components/ui/dropdown-menu";
 
 interface SpaceWithStats extends Space {
   signatureCount: number;
@@ -14,20 +44,10 @@ interface SpaceWithStats extends Space {
 }
 
 export default function SpacesPage() {
-  const [tenant, setTenant] = useState<any>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [spaces, setSpaces] = useState<SpaceWithStats[]>([]);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingSpace, setEditingSpace] = useState<Space | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-
-  useEffect(() => {
-    const currentTenant = store.getCurrentTenant();
-    setTenant(currentTenant);
-
-    if (currentTenant) {
-      loadSpaces(currentTenant.id);
-    }
-  }, []);
 
   const loadSpaces = (tenantId: string) => {
     const tenantSpaces = store.getSpacesByTenant(tenantId);
@@ -41,6 +61,21 @@ export default function SpacesPage() {
     setSpaces(spacesWithStats);
   };
 
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    const currentTenant = store.getCurrentTenant();
+    timer = setTimeout(() => {
+      setTenant(currentTenant);
+    }, 0);
+
+    if (currentTenant) {
+      timer = setTimeout(() => {
+        loadSpaces(currentTenant.id);
+      }, 0);
+    }
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleEditSpace = (space: Space) => {
     setEditingSpace(space);
     setShowEditDialog(true);
@@ -48,8 +83,8 @@ export default function SpacesPage() {
 
   const handleSaveEdit = (updatedSpace: Space) => {
     store.saveSpace(updatedSpace);
-    store.track(tenant?.id, "edit_space", { spaceId: updatedSpace.id });
-    loadSpaces(tenant.id);
+    store.track(tenant!.id, "edit_space", { spaceId: updatedSpace.id });
+    loadSpaces(tenant!.id);
   };
 
   const handleDeleteSpace = (spaceId: string) => {
@@ -60,153 +95,227 @@ export default function SpacesPage() {
     ) {
       store.deleteSpace(spaceId);
       setSpaces(spaces.filter((s) => s.id !== spaceId));
-      store.track(tenant?.id, "delete_space", { spaceId });
+      store.track(tenant!.id, "delete_space", { spaceId });
+    }
+  };
+
+  const handleCopyUrl = async (slug: string) => {
+    const spaceUrl = getSpaceUrl(slug);
+
+    // 1. Try modern Clipboard API (Requires HTTPS)
+    if (navigator.clipboard && globalThis.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(spaceUrl);
+        showToast.success("Link copied!");
+        return;
+      } catch (error) {
+        console.warn("Clipboard API failed, trying fallback...", error);
+      }
+    }
+
+    // 2. Fallback to execCommand (Works in insecure contexts)
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = spaceUrl;
+      // Ensure it's not visible but still in the DOM
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const successful = document.execCommand("copy");
+      textArea.remove();
+
+      if (successful) {
+        showToast.success("Link copied!");
+      } else {
+        throw new Error("execCommand returned false");
+      }
+    } catch (err) {
+      console.error("All copy methods failed:", err);
+      showToast.error("Failed to copy link");
     }
   };
 
   if (!tenant) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   const getSpaceUrl = (slug: string) => {
-    const host = typeof window !== "undefined" ? window.location.host : "echosign.io";
+    const host =
+      typeof globalThis === "undefined"
+        ? "echosign.io"
+        : globalThis.location.host;
     return `http://${host}/${slug}`;
   };
 
   return (
-    <div className="space-y-8">
+    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-stone-900">Spaces</h1>
-          <p className="text-stone-600 mt-2">
+          <h2 className="text-3xl font-bold tracking-tight">Spaces</h2>
+          <p className="text-muted-foreground">
             Create and manage walls where people can sign
           </p>
         </div>
-        <CreateSpaceDialog triggerClassName="bg-amber-700 text-white font-bold uppercase tracking-widest px-6 py-3 rounded-lg hover:bg-amber-800 transition-all">
+        <CreateSpaceDialog triggerClassName="bg-amber-700 hover:bg-amber-800 text-white border-none">
           + New Space
         </CreateSpaceDialog>
       </div>
 
       {/* Spaces Grid */}
       {spaces.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {spaces.map((space) => {
             const spaceUrl = getSpaceUrl(space.slug);
 
             return (
-              <div
+              <Card
                 key={space.id}
-                className="bg-white border border-stone-200 rounded-lg p-6 space-y-4">
-                {/* Space Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-stone-900">
-                      {space.name}
-                    </h3>
-                    {space.description && (
-                      <p className="text-sm text-stone-600 mt-1">
-                        {space.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="ml-4 text-xs font-bold uppercase tracking-widest text-stone-500 bg-stone-100 px-3 py-1 rounded">
-                    {space.visibility}
-                  </div>
-                </div>
-
-                {/* Share URL */}
-                <div className="bg-stone-50 p-3 rounded-lg">
-                  <p className="text-xs text-stone-500 font-bold uppercase tracking-widest mb-1">
-                    Share URL
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-sm text-stone-900 flex-1 break-all">
-                      {spaceUrl}
-                    </code>
-                    <button
-                      onClick={() => {
-                        if (navigator.clipboard && navigator.clipboard.writeText) {
-                          navigator.clipboard.writeText(spaceUrl);
-                          showToast.success("Link copied!");
-                        } else {
-                          // Fallback for older browsers
-                          const textarea = document.createElement("textarea");
-                          textarea.value = spaceUrl;
-                          document.body.appendChild(textarea);
-                          textarea.select();
-                          document.execCommand("copy");
-                          document.body.removeChild(textarea);
-                          showToast.success("Link copied!");
+                className="hover:shadow-lg duration-200 ease-in-out hover:outline hover:outline-amber-500">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <CardTitle className="text-xl">{space.name}</CardTitle>
+                      {space.description && (
+                        <CardDescription className="line-clamp-2">
+                          {space.description}
+                        </CardDescription>
+                      )}
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className={
+                          "bg-white shadow-xl text-black border-black/30 border w-60"
                         }
-                      }}
-                      className="px-3 py-1 bg-amber-700 text-white text-xs font-bold rounded hover:bg-amber-800 whitespace-nowrap transition-colors">
-                      Copy
-                    </button>
+                        align="end">
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleCopyUrl(space.slug)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy Link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                            <Link className="flex" href={`/${space.slug}`}>
+                              View Wall
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleEditSpace(space)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteSpace(space.id)}
+                            className="text-destructive">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </div>
+                  <div className="flex items-center gap-2 pt-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {space.visibility.charAt(0).toUpperCase() +
+                        space.visibility.slice(1)}
+                    </Badge>
+                  </div>
+                </CardHeader>
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <div className="text-lg font-bold text-blue-700">
-                      {space.signatureCount}
+                <CardContent className="space-y-3">
+                  {/* Share URL */}
+                  <div className="rounded-lg border bg-muted/50 py-1 px-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <code className="text-xs text-muted-foreground truncate flex-1">
+                        {spaceUrl}
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => handleCopyUrl(space.slug)}>
+                        <Copy className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <p className="text-xs text-stone-600 mt-1">
-                      Total Signatures
-                    </p>
                   </div>
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <div className="text-lg font-bold text-green-700">
-                      {space.publicCount}
-                    </div>
-                    <p className="text-xs text-stone-600 mt-1">
-                      Public Signatures
-                    </p>
-                  </div>
-                </div>
 
-                {/* Meta */}
-                <div className="text-xs text-stone-500 text-center pt-2 border-t border-stone-100">
-                  Created {new Date(space.createdAt).toLocaleDateString()}
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Users className="h-3 w-3" />
+                        <span className="text-xs">Signatures</span>
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {space.signatureCount}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Eye className="h-3 w-3" />
+                        <span className="text-xs">Public</span>
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {space.publicCount}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex items-center gap-2 text-xs text-muted-foreground border-t pt-4">
+                  <Calendar className="h-3 w-3" />
+                  <span>
+                    Created {new Date(space.createdAt).toLocaleDateString()}
+                  </span>
                   {space.updatedAt && (
-                    <span>
-                      {" "}
-                      • Updated{" "}
-                      {new Date(space.updatedAt).toLocaleDateString()}
-                    </span>
+                    <>
+                      <span>•</span>
+                      <span>
+                        Updated {new Date(space.updatedAt).toLocaleDateString()}
+                      </span>
+                    </>
                   )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  <Link
-                    href={`/${space.slug}`}
-                    className="flex-1 text-center px-3 py-2 bg-stone-100 text-stone-900 text-sm font-bold rounded-lg hover:bg-stone-200 transition-colors">
-                    View Wall
-                  </Link>
-                  <button
-                    onClick={() => handleEditSpace(space)}
-                    className="flex-1 px-3 py-2 bg-amber-50 text-amber-700 text-sm font-bold rounded-lg hover:bg-amber-100 transition-colors">
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteSpace(space.id)}
-                    className="flex-1 px-3 py-2 bg-red-50 text-red-700 text-sm font-bold rounded-lg hover:bg-red-100 transition-colors">
-                    Delete
-                  </button>
-                </div>
-              </div>
+                </CardFooter>
+              </Card>
             );
           })}
         </div>
       ) : (
-        <div className="p-8 bg-stone-50 border-2 border-dashed border-stone-200 rounded-lg text-center">
-          <p className="text-stone-500 mb-4">No spaces yet</p>
-          <CreateSpaceDialog triggerClassName="bg-amber-700 text-white font-bold uppercase tracking-widest px-4 py-2 rounded-lg hover:bg-amber-800">
-            Create Your First Space
-          </CreateSpaceDialog>
-        </div>
+        <Card className="border-dashed">
+          <CardHeader className="text-center pb-4">
+            <CardTitle>No spaces yet</CardTitle>
+            <CardDescription>
+              Create your first space to start collecting signatures
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="justify-center">
+            <CreateSpaceDialog triggerClassName="">
+              Create Your First Space
+            </CreateSpaceDialog>
+          </CardFooter>
+        </Card>
       )}
 
       {/* Edit Space Dialog */}

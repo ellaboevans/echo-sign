@@ -75,5 +75,7 @@ export interface AnalyticsEvent {
   tenantId: string;
   type: string;
   timestamp: number;
-  metadata: unknown;
+  metadata: unknown & {
+    spaceId: string;
+  };
 }

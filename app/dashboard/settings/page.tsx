@@ -2,14 +2,40 @@
 
 import Image from "next/image";
 import { store } from "@/store/store";
-import { TenantBranding } from "@/types/types";
+import { Tenant, TenantBranding, User as UserType } from "@/types/types";
 import { useState, useEffect } from "react";
 import TenantBrandingDialog from "@/components/tenant-branding-dialog";
 import { showToast } from "@/lib/toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  User,
+  Mail,
+  FileText,
+  Palette,
+  Shield,
+  AlertTriangle,
+  Copy,
+  Calendar,
+  Loader2,
+  Link2,
+} from "lucide-react";
 
 export default function SettingsPage() {
-  const [tenant, setTenant] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showBrandingDialog, setShowBrandingDialog] = useState(false);
@@ -23,19 +49,23 @@ export default function SettingsPage() {
   useEffect(() => {
     const currentTenant = store.getCurrentTenant();
     const currentUser = store.getCurrentUser();
-    
-    setTenant(currentTenant);
-    setUser(currentUser);
 
-    if (currentTenant) {
-      setFormData({
-        displayName: currentTenant.displayName,
-        description: currentTenant.description || "",
-        userEmail: currentUser?.email || "",
-      });
-    }
+    const timer = setTimeout(() => {
+      setTenant(currentTenant);
+      setUser(currentUser);
 
-    setIsLoading(false);
+      if (currentTenant) {
+        setFormData({
+          displayName: currentTenant.displayName,
+          description: currentTenant.description || "",
+          userEmail: currentUser?.email || "",
+        });
+      }
+
+      setIsLoading(false);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -66,7 +96,9 @@ export default function SettingsPage() {
 
       showToast.success("Settings saved successfully");
     } catch (error) {
-      showToast.error("Failed to save settings");
+      if (error instanceof Error) {
+        showToast.error("Failed to save settings");
+      }
     }
 
     setIsSaving(false);
@@ -84,290 +116,379 @@ export default function SettingsPage() {
     }
   };
 
+  const handleCopySubdomain = async () => {
+    try {
+      await navigator.clipboard.writeText(`${tenant!.subdomain}.echosign.io`);
+      showToast.success("Subdomain copied!");
+    } catch (error) {
+      if (error instanceof Error) {
+        showToast.error("Failed to copy subdomain");
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    if (
+      confirm(
+        "Are you sure? You will be logged out and redirected to the home page."
+      )
+    ) {
+      store.clearCurrentUser();
+      const protocol = globalThis.location.protocol;
+      const port = globalThis.location.port
+        ? `:${globalThis.location.port}`
+        : "";
+      globalThis.location.href = `${protocol}//lvh.me${port}/`;
+    }
+  };
+
   if (isLoading || !tenant || !user) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-stone-900">Settings</h1>
-        <p className="text-stone-600 mt-2">
+        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+        <p className="text-muted-foreground">
           Manage your account and wall settings
         </p>
       </div>
 
-      {/* Profile Section */}
-      <div className="bg-white border border-stone-200 rounded-lg p-8 max-w-2xl space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-stone-900 mb-6">
-            Account Settings
-          </h2>
-        </div>
-
-        <form onSubmit={handleSaveProfile} className="space-y-6">
-          {/* Display Name */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-stone-400 block">
-              Your Name
-            </label>
-            <input
-              type="text"
-              value={formData.displayName}
-              onChange={(e) =>
-                setFormData({ ...formData, displayName: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700"
-              required
-            />
-            <p className="text-xs text-stone-500">
-              This is displayed at the top of your dashboard
-            </p>
-          </div>
-
-          {/* Email */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-stone-400 block">
-              Email
-            </label>
-            <input
-              type="email"
-              value={formData.userEmail}
-              onChange={(e) =>
-                setFormData({ ...formData, userEmail: e.target.value })
-              }
-              className="w-full px-4 py-3 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700"
-            />
-            <p className="text-xs text-stone-500">
-              Used for account recovery (never shown publicly)
-            </p>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-stone-400 block">
-              Account Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="Tell visitors about your wall. This appears on your public profile."
-              className="w-full px-4 py-3 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 h-24 resize-none"
-            />
-            <p className="text-xs text-stone-500">
-              Optional description visible on your tenant homepage
-            </p>
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isSaving}
-            className="w-full px-6 py-3 bg-amber-700 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-amber-800 disabled:opacity-50 transition-colors">
-            {isSaving ? "Saving..." : "Save Changes"}
-          </button>
-        </form>
-      </div>
-
-      {/* Branding Section */}
-      <div className="bg-white border border-stone-200 rounded-lg p-8 max-w-2xl space-y-6">
-        <h2 className="text-2xl font-bold text-stone-900">Customize Branding</h2>
-        <p className="text-stone-600">
-          Make your homepage beautiful with custom colors, images, and text
-        </p>
-
-        {/* Current Branding Preview */}
-        {tenant.branding && (
-          <div className="space-y-4">
-            {tenant.branding.coverImage && (
+      <section className="grid grid-cols-2 gap-4">
+        {/* Account Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Settings</CardTitle>
+            <CardDescription>
+              Update your personal information and preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              {/* Display Name */}
               <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
-                  Cover Image
+                <Label htmlFor="displayName">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Your Name
+                  </div>
+                </Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  value={formData.displayName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, displayName: e.target.value })
+                  }
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  This is displayed at the top of your dashboard
                 </p>
-                <div className="relative rounded-lg overflow-hidden border border-stone-200 h-32">
-                  <Image
-                    src={tenant.branding.coverImage}
-                    alt="Cover"
-                    fill
-                    className="object-cover"
-                  />
+              </div>
+              {/* Email */}
+              <div className="space-y-2">
+                <Label htmlFor="email">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </div>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.userEmail}
+                  onChange={(e) =>
+                    setFormData({ ...formData, userEmail: e.target.value })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Used for account recovery (never shown publicly)
+                </p>
+              </div>
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Account Description
+                  </div>
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="Tell visitors about your wall. This appears on your public profile."
+                  className="h-24 resize-none"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional description visible on your tenant homepage
+                </p>
+              </div>
+            </form>
+          </CardContent>
+          <CardFooter>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className="w-full">
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+        {/* Branding Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              <CardTitle>Customize Branding</CardTitle>
+            </div>
+            <CardDescription>
+              Make your homepage beautiful with custom colors, images, and text
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Current Branding Preview */}
+            {tenant.branding && (
+              <div className="space-y-4">
+                {tenant.branding.coverImage && (
+                  <div className="space-y-2">
+                    <Label>Cover Image</Label>
+                    <div className="relative rounded-lg overflow-hidden border h-32">
+                      <Image
+                        src={tenant.branding.coverImage}
+                        alt="Cover"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+                {tenant.branding.logoImage && (
+                  <div className="space-y-2">
+                    <Label>Logo</Label>
+                    <div className="relative rounded-lg overflow-hidden border bg-muted p-2 w-20 h-20">
+                      <Image
+                        src={tenant.branding.logoImage}
+                        alt="Logo"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+                {tenant.branding.tagline && (
+                  <div className="space-y-2">
+                    <Label>Tagline</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {tenant.branding.tagline}
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-lg border p-4 bg-muted/50">
+                  <Label className="mb-2 block">Colors</Label>
+                  <div className="flex gap-3 items-center">
+                    {tenant.branding.primaryColor && (
+                      <div className="space-y-1">
+                        <div
+                          className="w-10 h-10 rounded-md border"
+                          style={{
+                            backgroundColor: tenant.branding.primaryColor,
+                          }}
+                        />
+                        <p className="text-xs text-center text-muted-foreground">
+                          Primary
+                        </p>
+                      </div>
+                    )}
+                    {tenant.branding.secondaryColor && (
+                      <div className="space-y-1">
+                        <div
+                          className="w-10 h-10 rounded-md border"
+                          style={{
+                            backgroundColor: tenant.branding.secondaryColor,
+                          }}
+                        />
+                        <p className="text-xs text-center text-muted-foreground">
+                          Secondary
+                        </p>
+                      </div>
+                    )}
+                    {tenant.branding.textColor && (
+                      <div className="space-y-1">
+                        <div
+                          className="w-10 h-10 rounded-md border"
+                          style={{
+                            backgroundColor: tenant.branding.textColor,
+                          }}
+                        />
+                        <p className="text-xs text-center text-muted-foreground">
+                          Text
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
-
-            {tenant.branding.logoImage && (
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
-                  Logo
-                </p>
-                <div className="relative rounded-lg overflow-hidden border border-stone-200 bg-stone-50 p-2 w-20 h-20">
-                  <Image
-                    src={tenant.branding.logoImage}
-                    alt="Logo"
-                    fill
-                    className="object-contain"
-                  />
+          </CardContent>
+          <CardFooter>
+            <Button
+              onClick={() => setShowBrandingDialog(true)}
+              variant="secondary"
+              className="w-full">
+              <Palette className="mr-2 h-4 w-4" />
+              {tenant.branding?.primaryColor
+                ? "Edit Branding"
+                : "Set Up Branding"}
+            </Button>
+          </CardFooter>
+        </Card>
+        {/* Account Information */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              <CardTitle>Account Information</CardTitle>
+            </div>
+            <CardDescription>
+              View your account details and creation date
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Subdomain */}
+            <div className="space-y-2">
+              <Label>
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4" />
+                  Subdomain
                 </div>
+              </Label>
+              <div className="flex gap-2">
+                <Input
+                  value={`${tenant.subdomain}.echosign.io`}
+                  readOnly
+                  className="font-mono text-sm"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopySubdomain}>
+                  <Copy className="h-4 w-4" />
+                </Button>
               </div>
-            )}
-
-            {tenant.branding.tagline && (
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
-                  Tagline
-                </p>
-                <p className="text-sm text-stone-700">{tenant.branding.tagline}</p>
-              </div>
-            )}
-
-            <div className="p-4 rounded-lg border border-stone-200 bg-stone-50">
-              <p className="text-xs font-bold text-stone-600 mb-2">Colors:</p>
-              <div className="flex gap-3 items-center">
-                {tenant.branding.primaryColor && (
-                  <div
-                    className="w-6 h-6 rounded border border-stone-300"
-                    style={{
-                      backgroundColor: tenant.branding.primaryColor,
-                    }}
-                    title="Primary"
-                  />
-                )}
-                {tenant.branding.secondaryColor && (
-                  <div
-                    className="w-6 h-6 rounded border border-stone-300"
-                    style={{
-                      backgroundColor: tenant.branding.secondaryColor,
-                    }}
-                    title="Secondary"
-                  />
-                )}
-                {tenant.branding.textColor && (
-                  <div
-                    className="w-6 h-6 rounded border border-stone-300"
-                    style={{
-                      backgroundColor: tenant.branding.textColor,
-                    }}
-                    title="Text"
-                  />
-                )}
+              <p className="text-xs text-muted-foreground">
+                Your unique account URL. This cannot be changed.
+              </p>
+            </div>
+            <Separator />
+            {/* Created */}
+            <div className="space-y-2">
+              <Label>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Account Created
+                </div>
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {new Date(tenant.createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+            <Separator />
+            {/* User Role */}
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <div>
+                <Badge variant="secondary">
+                  {user.role === "owner" ? "Account Owner" : "Guest"}
+                </Badge>
               </div>
             </div>
-          </div>
-        )}
-
-        <button
-          onClick={() => setShowBrandingDialog(true)}
-          className="w-full px-6 py-3 bg-blue-700 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-blue-800 transition-colors">
-          {tenant.branding?.primaryColor ? "Edit Branding" : "Set Up Branding"}
-        </button>
-      </div>
-
-      {/* Account Info */}
-      <div className="bg-white border border-stone-200 rounded-lg p-8 max-w-2xl space-y-6">
-        <h2 className="text-2xl font-bold text-stone-900">Account Information</h2>
-
-        <div className="space-y-6 border-t border-stone-200 pt-6">
-          {/* Subdomain */}
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
-              Subdomain
-            </p>
-            <div className="flex items-center gap-3">
-              <code className="flex-1 px-4 py-3 bg-stone-50 border border-stone-200 rounded-lg text-sm font-mono text-stone-900 break-all">
-                {tenant.subdomain}.echosign.io
-              </code>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    `${tenant.subdomain}.echosign.io`
-                  );
-                  showToast.success("Subdomain copied!");
-                }}
-                className="px-4 py-2 bg-amber-700 text-white text-sm font-bold rounded hover:bg-amber-800 whitespace-nowrap">
-                Copy
-              </button>
+          </CardContent>
+        </Card>
+        {/* Data & Privacy */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Data & Privacy</CardTitle>
+            <CardDescription>How we handle your information</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex gap-2">
+                <span>•</span>
+                <span>
+                  Your account data (name, email, subdomain) is stored securely
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span>•</span>
+                <span>
+                  Signatures and memories are stored with their visibility
+                  settings
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span>•</span>
+                <span>
+                  We track basic analytics (views, signatures per space)
+                  anonymously
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span>•</span>
+                <span>
+                  Your data is never sold or shared with third parties
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span>•</span>
+                <span>
+                  You can contact us to request a data export or deletion
+                </span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+        {/* Danger Zone */}
+        <Card className="border-destructive">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <CardTitle className="text-destructive">Danger Zone</CardTitle>
             </div>
-            <p className="text-xs text-stone-500">
-              Your unique account URL. This cannot be changed.
-            </p>
-          </div>
-
-          {/* Created */}
-          <div className="space-y-2 pt-4 border-t border-stone-100">
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
-              Account Created
-            </p>
-            <p className="text-sm text-stone-700">
-              {new Date(tenant.createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </p>
-          </div>
-
-          {/* User Role */}
-          <div className="space-y-2 pt-4 border-t border-stone-100">
-            <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
-              Role
-            </p>
-            <div className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded">
-              {user.role === "owner" ? "Account Owner" : "Guest"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Danger Zone */}
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-2xl space-y-4">
-        <h2 className="text-2xl font-bold text-red-700">Danger Zone</h2>
-        <p className="text-sm text-red-600">
-          These actions cannot be undone. Please be careful.
-        </p>
-
-        <button
-          onClick={() => {
-            if (
-              confirm(
-                "Are you sure? You will be logged out and redirected to the home page."
-              )
-            ) {
-              store.clearCurrentUser();
-              // Redirect to root domain landing page
-              const protocol = window.location.protocol;
-              const port = window.location.port ? `:${window.location.port}` : "";
-              window.location.href = `${protocol}//lvh.me${port}/`;
-            }
-          }}
-          className="w-full px-6 py-3 bg-red-700 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-red-800 transition-colors">
-          Logout
-        </button>
-      </div>
-
-      {/* Data & Privacy */}
-      <div className="bg-stone-50 border border-stone-200 rounded-lg p-8 max-w-2xl space-y-4">
-        <h2 className="text-xl font-bold text-stone-900">Data & Privacy</h2>
-        <div className="space-y-3 text-sm text-stone-600">
-          <p>
-            • Your account data (name, email, subdomain) is stored securely
-          </p>
-          <p>
-            • Signatures and memories are stored with their visibility settings
-          </p>
-          <p>
-            • We track basic analytics (views, signatures per space) anonymously
-          </p>
-          <p>
-            • Your data is never sold or shared with third parties
-          </p>
-          <p>
-            • You can contact us to request a data export or deletion
-          </p>
-        </div>
-      </div>
+            <CardDescription>
+              These actions cannot be undone. Please be careful.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="w-full">
+              Logout
+            </Button>
+          </CardFooter>
+        </Card>
+      </section>
 
       {/* Branding Dialog */}
       <TenantBrandingDialog
