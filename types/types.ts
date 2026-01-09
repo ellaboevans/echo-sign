@@ -41,6 +41,8 @@ export interface Space {
   visibility: Visibility; // public/private/unlisted for the space itself
   createdAt: number;
   updatedAt?: number;
+  signatureCount?: number;
+  publicCount?: number;
 }
 
 // User = either owner or guest who signed

@@ -1,27 +1,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { store } from "@/store/store";
 import { useTenant } from "@/store/tenant-context";
 import Link from "next/link";
 import FeaturedMemory from "@/components/featured-memory";
-import { SignatureEntry } from "@/types/types";
+import { SignatureEntry, Space, Tenant } from "@/types/types";
 
 interface TenantWallViewProps {
   tenantParam?: string; // For path-based routing
 }
 
-export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
+export default function TenantWallView({
+  tenantParam,
+}: Readonly<TenantWallViewProps>) {
   const { tenant: contextTenant } = useTenant();
-  const [tenant, setTenant] = useState<any>(null);
-  const [spaces, setSpaces] = useState<any[]>([]);
-  const [featuredMemory, setFeaturedMemory] = useState<SignatureEntry | null>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [featuredMemory, setFeaturedMemory] = useState<SignatureEntry | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Priority: context tenant (from subdomain-based routing)
+    let timer: NodeJS.Timeout;
     if (contextTenant) {
-      setTenant(contextTenant);
+      timer = setTimeout(() => {
+        setTenant(contextTenant);
+      }, 0);
+
       const tenantSpaces = store.getSpacesByTenant(contextTenant.id);
       const spacesWithStats = tenantSpaces.map((space) => {
         const stats = store.getSpaceStats(space.id);
@@ -31,21 +40,27 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
         };
       });
       // Show only public spaces
-      setSpaces(spacesWithStats.filter((s) => s.visibility === "public"));
-      
+      timer = setTimeout(() => {
+        setSpaces(spacesWithStats.filter((s) => s.visibility === "public"));
+      }, 0);
+
       // Load featured memory
       const featured = store.getFeaturedMemory(contextTenant.id);
-      setFeaturedMemory(featured);
-      
-      setIsLoading(false);
-      return;
+      timer = setTimeout(() => {
+        setFeaturedMemory(featured);
+        setIsLoading(false);
+      }, 0);
+
+      return () => clearTimeout(timer);
     }
 
     // Fallback: load from param (path-based routing)
     if (tenantParam) {
       const foundTenant = store.getTenantBySubdomain(tenantParam);
       if (foundTenant) {
-        setTenant(foundTenant);
+        timer = setTimeout(() => {
+          setTenant(foundTenant);
+        }, 0);
         store.track(foundTenant.id, "view_tenant_home");
         const tenantSpaces = store.getSpacesByTenant(foundTenant.id);
         const spacesWithStats = tenantSpaces.map((space) => {
@@ -56,13 +71,17 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
           };
         });
         // Show only public spaces
-        setSpaces(spacesWithStats.filter((s) => s.visibility === "public"));
-        
+        timer = setTimeout(() => {
+          setSpaces(spacesWithStats.filter((s) => s.visibility === "public"));
+        }, 0);
+
         // Load featured memory
         const featured = store.getFeaturedMemory(foundTenant.id);
-        setFeaturedMemory(featured);
+        timer = setTimeout(() => {
+          setFeaturedMemory(featured);
+          setIsLoading(false);
+        }, 0);
       }
-      setIsLoading(false);
     }
   }, [contextTenant, tenantParam]);
 
@@ -79,7 +98,9 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-stone-500 mb-4">Account not found</p>
-          <Link href="/onboarding" className="text-amber-700 hover:text-amber-800">
+          <Link
+            href="/onboarding"
+            className="text-amber-700 hover:text-amber-800">
             ← Create Your Account
           </Link>
         </div>
@@ -92,19 +113,24 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
   const primaryColor = branding.primaryColor || "#B45309";
   const secondaryColor = branding.secondaryColor || "#92400E";
   const textColor = branding.textColor || "#1C1917";
-  const bgColor = typeof window !== "undefined" 
-    ? window.getComputedStyle(document.documentElement).getPropertyValue("--background") 
-    : "#FAFAF9";
+  const bgColor =
+    typeof globalThis === "undefined"
+      ? "#FAFAF9"
+      : globalThis
+          .getComputedStyle(document.documentElement)
+          .getPropertyValue("--background");
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
       {/* Cover Image */}
       {branding.coverImage && (
         <div className="relative w-full h-80 overflow-hidden">
-          <img
+          <Image
             src={branding.coverImage}
             alt="Cover"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            priority
           />
           <div className="absolute inset-0 bg-black/20" />
         </div>
@@ -115,37 +141,40 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
         <div className="space-y-4 border-b border-stone-200 pb-10 mb-12">
           <div className="flex items-center gap-4">
             {branding.logoImage && (
-              <img
+              <Image
                 src={branding.logoImage}
                 alt="Logo"
-                className="h-16 w-16 object-contain"
+                width={64}
+                height={64}
+                className="object-contain"
               />
             )}
             <div>
-              <h1 
+              <h1
                 className="text-5xl md:text-6xl font-display font-bold"
-                style={{ color: textColor }}
-              >
+                style={{ color: textColor }}>
                 {tenant.displayName}
               </h1>
               {branding.tagline && (
-                <p 
+                <p
                   className="text-sm font-semibold mt-1"
-                  style={{ color: secondaryColor }}
-                >
+                  style={{ color: secondaryColor }}>
                   {branding.tagline}
                 </p>
               )}
             </div>
           </div>
-          
+
           {tenant.description && (
-            <p className="text-lg leading-relaxed italic max-w-2xl" style={{ color: textColor }}>
+            <p
+              className="text-lg leading-relaxed italic max-w-2xl"
+              style={{ color: textColor }}>
               {tenant.description}
             </p>
           )}
           <p className="text-sm" style={{ color: secondaryColor }}>
-            {spaces.length} {spaces.length === 1 ? "signature wall" : "signature walls"}
+            {spaces.length}{" "}
+            {spaces.length === 1 ? "signature wall" : "signature walls"}
           </p>
         </div>
 
@@ -164,22 +193,24 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
                 key={space.id}
                 href={`/${space.slug}`}
                 className="group bg-white border border-stone-200 rounded-lg p-6 hover:shadow-lg transition-all duration-300"
-                style={{ 
-                  borderColor: branding.primaryColor ? `${primaryColor}40` : undefined,
+                style={{
+                  borderColor: branding.primaryColor
+                    ? `${primaryColor}40`
+                    : undefined,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = primaryColor;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = branding.primaryColor ? `${primaryColor}40` : "";
+                  e.currentTarget.style.borderColor = branding.primaryColor
+                    ? `${primaryColor}40`
+                    : "";
                 }}>
-                
                 {/* Space Header */}
                 <div className="mb-4">
-                  <h2 
+                  <h2
                     className="text-2xl font-bold transition-colors"
-                    style={{ color: textColor }}
-                  >
+                    style={{ color: textColor }}>
                     {space.name}
                   </h2>
                   {space.description && (
@@ -208,9 +239,15 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
                 </div>
 
                 {/* Meta */}
-                <div className="text-xs flex items-center justify-between pt-3 border-t border-stone-100" style={{ color: secondaryColor }}>
-                  <span>Created {new Date(space.createdAt).toLocaleDateString()}</span>
-                  <span className="font-bold group-hover:underline" style={{ color: primaryColor }}>
+                <div
+                  className="text-xs flex items-center justify-between pt-3 border-t border-stone-100"
+                  style={{ color: secondaryColor }}>
+                  <span>
+                    Created {new Date(space.createdAt).toLocaleDateString()}
+                  </span>
+                  <span
+                    className="font-bold group-hover:underline"
+                    style={{ color: primaryColor }}>
                     View & Sign →
                   </span>
                 </div>
@@ -230,7 +267,9 @@ export default function TenantWallView({ tenantParam }: TenantWallViewProps) {
 
         {/* Footer */}
         {branding.footerText && (
-          <footer className="mt-16 pt-8 border-t border-stone-200 text-center" style={{ color: textColor }}>
+          <footer
+            className="mt-16 pt-8 border-t border-stone-200 text-center"
+            style={{ color: textColor }}>
             <p className="text-sm">{branding.footerText}</p>
           </footer>
         )}

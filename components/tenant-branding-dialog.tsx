@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { TenantBranding } from "@/types/types";
 import { useState } from "react";
 import {
@@ -25,7 +26,7 @@ export default function TenantBrandingDialog({
   isOpen,
   onClose,
   onSave,
-}: TenantBrandingDialogProps) {
+}: Readonly<TenantBrandingDialogProps>) {
   const [primaryColor, setPrimaryColor] = useState(
     branding.primaryColor || "#B45309"
   );
@@ -98,7 +99,7 @@ export default function TenantBrandingDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-150 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Customize Your Branding</DialogTitle>
         </DialogHeader>
@@ -108,7 +109,8 @@ export default function TenantBrandingDialog({
           <div className="space-y-2">
             <Label className="text-sm font-bold">Cover Image</Label>
             <p className="text-xs text-stone-600 mb-2">
-              Large hero banner displayed at top of your homepage. Recommended: 1200x300px
+              Large hero banner displayed at top of your homepage. Recommended:
+              1200x300px
             </p>
             <div className="flex gap-4">
               <div className="flex-1">
@@ -128,11 +130,13 @@ export default function TenantBrandingDialog({
               </div>
             </div>
             {coverImagePreview && (
-              <div className="mt-3 rounded-lg overflow-hidden border border-stone-200">
-                <img
+              <div className="relative mt-3 rounded-lg overflow-hidden border border-stone-200 h-32">
+                <Image
                   src={coverImagePreview}
                   alt="Cover Preview"
-                  className="w-full h-32 object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                 />
               </div>
             )}
@@ -163,10 +167,13 @@ export default function TenantBrandingDialog({
             </div>
             {logoImagePreview && (
               <div className="mt-3 rounded-lg overflow-hidden border border-stone-200 bg-stone-50 p-2">
-                <img
+                <Image
                   src={logoImagePreview}
                   alt="Logo Preview"
-                  className="w-20 h-20 object-contain"
+                  width={80}
+                  height={80}
+                  className="object-contain"
+                  unoptimized
                 />
               </div>
             )}
@@ -182,9 +189,7 @@ export default function TenantBrandingDialog({
                 <Label htmlFor="primary-color" className="text-xs font-bold">
                   Primary Color
                 </Label>
-                <p className="text-xs text-stone-600 mb-2">
-                  Buttons, accents
-                </p>
+                <p className="text-xs text-stone-600 mb-2">Buttons, accents</p>
                 <div className="flex gap-2">
                   <input
                     type="color"
@@ -207,9 +212,7 @@ export default function TenantBrandingDialog({
                 <Label htmlFor="secondary-color" className="text-xs font-bold">
                   Secondary Color
                 </Label>
-                <p className="text-xs text-stone-600 mb-2">
-                  Links, highlights
-                </p>
+                <p className="text-xs text-stone-600 mb-2">Links, highlights</p>
                 <div className="flex gap-2">
                   <input
                     type="color"
@@ -232,9 +235,7 @@ export default function TenantBrandingDialog({
                 <Label htmlFor="text-color" className="text-xs font-bold">
                   Text Color
                 </Label>
-                <p className="text-xs text-stone-600 mb-2">
-                  Body text
-                </p>
+                <p className="text-xs text-stone-600 mb-2">Body text</p>
                 <div className="flex gap-2">
                   <input
                     type="color"
@@ -319,7 +320,11 @@ export default function TenantBrandingDialog({
         </div>
 
         <DialogFooter className="flex gap-2">
-          <Button variant="outline" onClick={handleClose} disabled={isSaving} className="flex-1">
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSaving}
+            className="flex-1">
             Cancel
           </Button>
           <Button

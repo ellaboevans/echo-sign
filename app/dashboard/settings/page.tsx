@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { store } from "@/store/store";
 import { TenantBranding } from "@/types/types";
 import { useState, useEffect } from "react";
@@ -186,11 +187,12 @@ export default function SettingsPage() {
                 <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
                   Cover Image
                 </p>
-                <div className="rounded-lg overflow-hidden border border-stone-200">
-                  <img
+                <div className="relative rounded-lg overflow-hidden border border-stone-200 h-32">
+                  <Image
                     src={tenant.branding.coverImage}
                     alt="Cover"
-                    className="w-full h-32 object-cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               </div>
@@ -201,11 +203,12 @@ export default function SettingsPage() {
                 <p className="text-xs font-bold uppercase tracking-widest text-stone-400">
                   Logo
                 </p>
-                <div className="rounded-lg overflow-hidden border border-stone-200 bg-stone-50 p-2">
-                  <img
+                <div className="relative rounded-lg overflow-hidden border border-stone-200 bg-stone-50 p-2 w-20 h-20">
+                  <Image
                     src={tenant.branding.logoImage}
                     alt="Logo"
-                    className="w-20 h-20 object-contain"
+                    fill
+                    className="object-contain"
                   />
                 </div>
               </div>
