@@ -7,8 +7,8 @@ export default function OnboardingPage() {
   const [isDevMode, setIsDevMode] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const host = window.location.hostname;
+    if (typeof globalThis !== "undefined" && globalThis.window) {
+      const host = globalThis.location?.hostname || "";
       setIsDevMode(host.includes("localhost") || host.includes("127.0.0.1"));
     }
   }, []);

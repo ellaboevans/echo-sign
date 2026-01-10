@@ -7,7 +7,6 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   Dialog,
@@ -18,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { store } from "@/store/store";
-import { Space, Visibility } from "@/types/types";
+import { Space, Visibility, UserRole } from "@/types/types";
 import { useState } from "react";
 import { generateUUID } from "@/lib/uuid";
 
@@ -33,10 +32,8 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
   const [memory, setMemory] = useState("");
   const [visibility, setVisibility] = useState<Visibility>(Visibility.PUBLIC);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [_, setSignatureData] = useState<string | null>(null);
 
   const handleSave = async (data: string) => {
-    setSignatureData(data);
     if (!name.trim()) {
       alert("A name is required to associate with your signature.");
       return;
@@ -44,22 +41,33 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
 
     setIsSubmitting(true);
 
+    const currentTenant = store.getCurrentTenant();
+    if (!currentTenant) {
+      alert("Unable to find workspace");
+      setIsSubmitting(false);
+      return;
+    }
+
     let user = store.getCurrentUser();
-    if (user?.name !== name) {
+    if (user?.name !== name || user?.email !== email) {
       user = {
-        id: generateUUID(),
+        id: user?.id || generateUUID(),
+        tenantId: currentTenant.id,
         name: name,
-        email: email,
-        createdAt: Date.now(),
+        email: email || undefined,
+        role: UserRole.GUEST,
+        createdAt: user?.createdAt || Date.now(),
       };
       store.saveUser(user);
     }
 
     const entry = {
       id: generateUUID(),
+      tenantId: currentTenant.id,
       spaceId: space.id,
       userId: user.id,
       userName: user.name,
+      userEmail: email || undefined,
       signatureData: data,
       memoryText: memory.trim() || undefined,
       visibility: visibility,
@@ -67,7 +75,10 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
     };
 
     store.saveEntry(entry);
-    store.track("sign_space", { spaceId: space.id, visibility });
+    store.track(currentTenant.id, "sign_space", {
+      spaceId: space.id,
+      visibility,
+    });
 
     setTimeout(() => {
       setIsSubmitting(false);
@@ -76,7 +87,6 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
       setEmail(user.email || "");
       setMemory("");
       setVisibility(Visibility.PUBLIC);
-      setSignatureData(null);
     }, 500);
   };
 

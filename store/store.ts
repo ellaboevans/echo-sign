@@ -5,7 +5,6 @@ import {
   SignatureEntry,
   Visibility,
   AnalyticsEvent,
-  UserRole,
 } from "@/types/types";
 import { generateUUID } from "@/lib/uuid";
 import * as storage from "@/lib/storage";
@@ -20,7 +19,7 @@ const STORAGE_KEYS = {
   CURRENT_USER: "sig_dir_current_user",
 };
 
-const isClient = typeof window !== "undefined";
+const isClient = typeof globalThis !== "undefined" && typeof globalThis.window !== "undefined";
 
 const get = <T>(key: string, defaultValue: T): T => {
   if (!isClient) return defaultValue;
@@ -213,9 +212,8 @@ export const store = {
       type,
       timestamp: Date.now(),
       metadata: {
+        spaceId: "",
         ...metadata,
-        userAgent: navigator.userAgent,
-        language: navigator.language,
       },
     };
     set(STORAGE_KEYS.ANALYTICS, [...events, newEvent]);
@@ -249,7 +247,7 @@ export const store = {
     // Use date-based seed to show same memory all day
     const today = new Date();
     const dateString = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-    const seed = dateString.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const seed = dateString.split('').reduce((acc, char) => acc + (char.codePointAt(0) ?? 0), 0);
     const index = seed % entries.length;
     
     return entries[index] || null;

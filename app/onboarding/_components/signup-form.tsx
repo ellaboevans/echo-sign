@@ -3,16 +3,12 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { store } from "@/store/store";
-import { useTenant } from "@/store/tenant-context";
 import { Tenant, User, UserRole } from "@/types/types";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { generateUUID } from "@/lib/uuid";
 import { showToast } from "@/lib/toast";
 
 export default function SignupForm() {
-  const router = useRouter();
-  const { setTenant, setUser } = useTenant();
 
   const [formData, setFormData] = useState({
     ownerName: "",
@@ -49,7 +45,6 @@ export default function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
 
     try {
@@ -109,10 +104,6 @@ export default function SignupForm() {
       store.saveTenant(tenant);
       store.saveUser(user);
 
-      // Set context
-      setTenant(tenant);
-      setUser(user);
-
       // Track event
       store.track(tenantId, "tenant_created", {
         subdomain,
@@ -122,18 +113,22 @@ export default function SignupForm() {
 
       // Redirect to tenant dashboard (not the public wall)
       let dashboardUrl: string;
-      
-      if (typeof globalThis.window !== "undefined") {
-        const host = globalThis.location.hostname;
-        const protocol = globalThis.location.protocol;
-        const port = globalThis.location.port;
-        
+
+      if (typeof globalThis !== "undefined" && globalThis.window) {
+        const host = globalThis.location?.hostname || "echosign.io";
+        const protocol = globalThis.location?.protocol || "https:";
+        const port = globalThis.location?.port || "";
+
         if (host === "localhost" || host === "127.0.0.1") {
           // Plain localhost: use path-based routing (/tenant/cs/dashboard)
-          dashboardUrl = `${protocol}//${host}${port ? `:${port}` : ""}/tenant/${subdomain}/dashboard`;
+          dashboardUrl = `${protocol}//${host}${
+            port ? `:${port}` : ""
+          }/tenant/${subdomain}/dashboard`;
         } else if (host.includes("lvh.me")) {
           // lvh.me: use subdomain-based routing (cs.lvh.me/dashboard)
-          dashboardUrl = `${protocol}//${subdomain}.${host}${port ? `:${port}` : ""}/dashboard`;
+          dashboardUrl = `${protocol}//${subdomain}.${host}${
+            port ? `:${port}` : ""
+          }/dashboard`;
         } else {
           // Production or other: use subdomain
           const baseDomain = host.split(".").slice(-2).join(".");

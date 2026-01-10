@@ -32,21 +32,28 @@ export default function SpaceEditDialog({
   isOpen,
   onClose,
   onSave,
-}: SpaceEditDialogProps) {
+}: Readonly<SpaceEditDialogProps>) {
   const [name, setName] = useState(space.name);
   const [description, setDescription] = useState(space.description || "");
-  const [visibility, setVisibility] = useState(space.visibility);
+  const [visibility, setVisibility] = useState<Visibility | null>(
+    space.visibility
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = () => {
+    if (!visibility) {
+      alert("Please select a visibility setting");
+      return;
+    }
+
     setIsSaving(true);
-    
+
     // Update space with new values
     const updatedSpace: Space = {
       ...space,
       name,
       description: description || undefined,
-      visibility: visibility as Visibility,
+      visibility,
       updatedAt: Date.now(),
     };
 
@@ -65,7 +72,7 @@ export default function SpaceEditDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>Edit Space</DialogTitle>
         </DialogHeader>
@@ -110,7 +117,9 @@ export default function SpaceEditDialog({
             <Label htmlFor="space-visibility" className="text-sm font-bold">
               Visibility
             </Label>
-            <Select value={visibility} onValueChange={setVisibility}>
+            <Select
+              value={visibility || ""}
+              onValueChange={(value) => setVisibility(value as Visibility)}>
               <SelectTrigger id="space-visibility">
                 <SelectValue />
               </SelectTrigger>
