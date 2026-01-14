@@ -7,6 +7,7 @@ import SignWallDialog from "@/components/sign-wall-dialog";
 import Link from "next/link";
 import { Tenant, Space, SignatureEntry } from "@/types/types";
 import { getCurrentSubdomain } from "@/lib/subdomain";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function SpaceSigningPage({
   params,
@@ -50,6 +51,7 @@ export default function SpaceSigningPage({
       
       const publicEntries = store.getPublicEntriesBySpace(foundSpace.id);
       setEntries(publicEntries);
+      setIsLoading(false);
     } else {
       setIsLoading(false);
     }
@@ -58,7 +60,7 @@ export default function SpaceSigningPage({
   if (isLoading) {
     return (
       <div className="min-h-dvh flex items-center justify-center">
-        <div className="text-stone-500">Loading...</div>
+        <LoadingSpinner />
       </div>
     );
   }
