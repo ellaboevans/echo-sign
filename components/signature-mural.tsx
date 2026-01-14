@@ -179,7 +179,7 @@ export default function SignatureMural({ entries, spaceName }: Props) {
                       opacity: hoveredId === entry.id ? 1 : 0,
                       y: hoveredId === entry.id ? 5 : -5,
                     }}
-                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 text-center pointer-events-none whitespace-nowrap"
+                    className="absolute top-full mt-6 left-1/2 -translate-x-1/2 text-center pointer-events-none whitespace-nowrap"
                   >
                     <p className="text-xs font-bold text-stone-900">
                       {entry.userName}
