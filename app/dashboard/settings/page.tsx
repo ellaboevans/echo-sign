@@ -408,6 +408,21 @@ export default function SettingsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Mural Background Preview */}
+                {tenant.branding?.muralBackground && (
+                  <div className="space-y-2">
+                    <Label>Signature Canvas Background</Label>
+                    <div
+                      className="rounded-lg border h-32 overflow-hidden"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='${tenant.branding.muralBackground.dotSpacing || 40}' height='${tenant.branding.muralBackground.dotSpacing || 40}' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='${(tenant.branding.muralBackground.dotSpacing || 40) / 2}' cy='${(tenant.branding.muralBackground.dotSpacing || 40) / 2}' r='${tenant.branding.muralBackground.dotSize || 1.5}' fill='%23000' opacity='${(tenant.branding.muralBackground.dotOpacity ?? 12) / 100}'/%3E%3C/svg%3E")`,
+                        backgroundSize: `${tenant.branding.muralBackground.dotSpacing || 40}px ${tenant.branding.muralBackground.dotSpacing || 40}px`,
+                        background: `linear-gradient(to bottom right, ${tenant.branding.muralBackground.bgColor1 || "#FAF5F0"}, ${tenant.branding.muralBackground.bgColor2 || "#FEFAF0"}, ${tenant.branding.muralBackground.bgColor3 || "#FAF5F0"})`,
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
