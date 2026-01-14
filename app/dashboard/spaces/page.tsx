@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DeleteSpaceDialog } from "@/components/delete-space-dialog";
 import {
   MoreVertical,
   Copy,
@@ -48,6 +49,7 @@ export default function SpacesPage() {
   const [spaces, setSpaces] = useState<SpaceWithStats[]>([]);
   const [editingSpace, setEditingSpace] = useState<Space | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [deleteSpaceId, setDeleteSpaceId] = useState<string | null>(null);
 
   const loadSpaces = (tenantId: string) => {
     const tenantSpaces = store.getSpacesByTenant(tenantId);
@@ -62,18 +64,14 @@ export default function SpacesPage() {
   };
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     const currentTenant = store.getCurrentTenant();
-    timer = setTimeout(() => {
-      setTenant(currentTenant);
-    }, 0);
-
-    if (currentTenant) {
-      timer = setTimeout(() => {
-        loadSpaces(currentTenant.id);
-      }, 0);
+    
+    if (!currentTenant) {
+      return;
     }
-    return () => clearTimeout(timer);
+
+    setTenant(currentTenant);
+    loadSpaces(currentTenant.id);
   }, []);
 
   const handleEditSpace = (space: Space) => {
@@ -88,15 +86,10 @@ export default function SpacesPage() {
   };
 
   const handleDeleteSpace = (spaceId: string) => {
-    if (
-      confirm(
-        "Delete this space? All signatures will remain in the database but no longer accessible from this space."
-      )
-    ) {
-      store.deleteSpace(spaceId);
-      setSpaces(spaces.filter((s) => s.id !== spaceId));
-      store.track(tenant!.id, "delete_space", { spaceId });
-    }
+    store.deleteSpace(spaceId);
+    setSpaces(spaces.filter((s) => s.id !== spaceId));
+    store.track(tenant!.id, "delete_space", { spaceId });
+    showToast.success("Space deleted successfully.");
   };
 
   const handleCopyUrl = async (slug: string) => {
@@ -109,7 +102,9 @@ export default function SpacesPage() {
         showToast.success("Link copied!");
         return;
       } catch (error) {
-        console.warn("Clipboard API failed, trying fallback...", error);
+        if (process.env.NODE_ENV === "development") {
+          console.warn("Clipboard API failed, trying fallback...", error);
+        }
       }
     }
 
@@ -134,15 +129,17 @@ export default function SpacesPage() {
         throw new Error("execCommand returned false");
       }
     } catch (err) {
-      console.error("All copy methods failed:", err);
+      if (process.env.NODE_ENV === "development") {
+        console.error("All copy methods failed:", err);
+      }
       showToast.error("Failed to copy link");
     }
   };
 
   if (!tenant) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-dvh items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -160,8 +157,8 @@ export default function SpacesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Spaces</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-3xl font-bold tracking-tight text-balance">Spaces</h2>
+          <p className="text-muted-foreground text-pretty">
             Create and manage walls where people can sign
           </p>
         </div>
@@ -183,53 +180,52 @@ export default function SpacesPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
-                      <CardTitle className="text-xl">{space.name}</CardTitle>
+                      <CardTitle className="text-xl text-balance">{space.name}</CardTitle>
                       {space.description && (
-                        <CardDescription className="line-clamp-2">
+                        <CardDescription className="line-clamp-2 text-pretty">
                           {space.description}
                         </CardDescription>
                       )}
                     </div>
                     <DropdownMenu>
-                      <DropdownMenuTrigger>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                      <DropdownMenuTrigger
+                        className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-muted"
+                      >
+                        <MoreVertical className="size-4" />
+                        <span className="sr-only">Space options</span>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        className={
-                          "bg-white shadow-xl text-black border-black/30 border w-60"
-                        }
+                        className="bg-white text-slate-900"
                         align="end">
                         <DropdownMenuGroup>
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => handleCopyUrl(space.slug)}>
-                            <Copy className="mr-2 h-4 w-4" />
+                            <Copy className="mr-2 size-4" />
                             Copy Link
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            <Link className="flex" href={`/${space.slug}`}>
-                              View Wall
-                            </Link>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              window.location.href = `/${space.slug}`;
+                            }}
+                          >
+                            <ExternalLink className="mr-2 size-4" />
+                            View Wall
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleEditSpace(space)}>
-                            <Edit className="mr-2 h-4 w-4" />
+                            <Edit className="mr-2 size-4" />
                             Edit
                           </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                           <DropdownMenuItem
-                            onClick={() => handleDeleteSpace(space.id)}
-                            className="text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            onClick={() => setDeleteSpaceId(space.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                          >
+                            <Trash2 className="mr-2 size-4" />
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuGroup>
@@ -255,8 +251,10 @@ export default function SpacesPage() {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 shrink-0"
-                        onClick={() => handleCopyUrl(space.slug)}>
+                        onClick={() => handleCopyUrl(space.slug)}
+                      >
                         <Copy className="h-3 w-3" />
+                        <span className="sr-only">Copy space URL</span>
                       </Button>
                     </div>
                   </div>
@@ -305,8 +303,8 @@ export default function SpacesPage() {
       ) : (
         <Card className="border-dashed">
           <CardHeader className="text-center pb-4">
-            <CardTitle>No spaces yet</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-balance">No spaces yet</CardTitle>
+            <CardDescription className="text-pretty">
               Create your first space to start collecting signatures
             </CardDescription>
           </CardHeader>
@@ -329,6 +327,18 @@ export default function SpacesPage() {
           }}
           onSave={handleSaveEdit}
         />
+      )}
+
+      {/* Delete Space Dialog */}
+      {deleteSpaceId && (
+        <DeleteSpaceDialog
+          onConfirm={() => {
+            handleDeleteSpace(deleteSpaceId);
+            setDeleteSpaceId(null);
+          }}
+        >
+          <div />
+        </DeleteSpaceDialog>
       )}
     </div>
   );
