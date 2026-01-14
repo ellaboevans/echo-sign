@@ -9,6 +9,16 @@ export enum UserRole {
   GUEST = "guest",
 }
 
+// Mural background customization for signature canvas
+export interface MuralBackground {
+  bgColor1?: string; // First gradient color (hex)
+  bgColor2?: string; // Second gradient color (hex)
+  bgColor3?: string; // Third gradient color (hex)
+  dotOpacity?: number; // Dot grid opacity (0-100)
+  dotSize?: number; // Dot size in pixels
+  dotSpacing?: number; // Spacing between dots in pixels
+}
+
 // Branding customization for tenant homepage
 export interface TenantBranding {
   coverImage?: string; // URL/Base64 image
@@ -18,6 +28,7 @@ export interface TenantBranding {
   textColor?: string; // Hex color: #000000
   tagline?: string; // Short phrase under tenant name
   footerText?: string; // Custom footer message
+  muralBackground?: MuralBackground; // Signature canvas customization
 }
 
 // Tenant = the wall owner's account

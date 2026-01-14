@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { TenantBranding } from "@/types/types";
+import { TenantBranding, MuralBackground } from "@/types/types";
 import { useState } from "react";
 import {
   Dialog,
@@ -41,6 +41,24 @@ export default function TenantBrandingDialog({
   const [logoImagePreview, setLogoImagePreview] = useState<string | null>(
     branding.logoImage || null
   );
+  const [bgColor1, setBgColor1] = useState(
+    branding.muralBackground?.bgColor1 || "#FAF5F0"
+  );
+  const [bgColor2, setBgColor2] = useState(
+    branding.muralBackground?.bgColor2 || "#FEFAF0"
+  );
+  const [bgColor3, setBgColor3] = useState(
+    branding.muralBackground?.bgColor3 || "#FAF5F0"
+  );
+  const [dotOpacity, setDotOpacity] = useState(
+    branding.muralBackground?.dotOpacity ?? 12
+  );
+  const [dotSize, setDotSize] = useState(
+    branding.muralBackground?.dotSize ?? 1.5
+  );
+  const [dotSpacing, setDotSpacing] = useState(
+    branding.muralBackground?.dotSpacing ?? 40
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,6 +96,14 @@ export default function TenantBrandingDialog({
       footerText: footerText || undefined,
       coverImage: coverImagePreview || undefined,
       logoImage: logoImagePreview || undefined,
+      muralBackground: {
+        bgColor1,
+        bgColor2,
+        bgColor3,
+        dotOpacity,
+        dotSize,
+        dotSpacing,
+      },
     };
 
     onSave(updatedBranding);
@@ -93,6 +119,12 @@ export default function TenantBrandingDialog({
     setTextColor(branding.textColor || "#1C1917");
     setTagline(branding.tagline || "");
     setFooterText(branding.footerText || "");
+    setBgColor1(branding.muralBackground?.bgColor1 || "#FAF5F0");
+    setBgColor2(branding.muralBackground?.bgColor2 || "#FEFAF0");
+    setBgColor3(branding.muralBackground?.bgColor3 || "#FAF5F0");
+    setDotOpacity(branding.muralBackground?.dotOpacity ?? 12);
+    setDotSize(branding.muralBackground?.dotSize ?? 1.5);
+    setDotSpacing(branding.muralBackground?.dotSpacing ?? 40);
     onClose();
   };
 
@@ -316,7 +348,158 @@ export default function TenantBrandingDialog({
               Custom message at bottom of your pages. Max 200 characters.
             </p>
           </div>
-        </div>
+
+          {/* Signature Canvas Mural Background */}
+          <div className="border-t border-stone-200 pt-4">
+            <h3 className="text-sm font-bold mb-4">Signature Canvas Background</h3>
+
+            {/* Background Colors */}
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="space-y-2">
+                <Label htmlFor="bg-color-1" className="text-xs font-bold">
+                  Color 1
+                </Label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    id="bg-color-1"
+                    value={bgColor1}
+                    onChange={(e) => setBgColor1(e.target.value)}
+                    className="w-12 h-8 rounded cursor-pointer border border-stone-300"
+                  />
+                  <Input
+                    value={bgColor1}
+                    onChange={(e) => setBgColor1(e.target.value)}
+                    className="flex-1 text-sm font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bg-color-2" className="text-xs font-bold">
+                  Color 2
+                </Label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    id="bg-color-2"
+                    value={bgColor2}
+                    onChange={(e) => setBgColor2(e.target.value)}
+                    className="w-12 h-8 rounded cursor-pointer border border-stone-300"
+                  />
+                  <Input
+                    value={bgColor2}
+                    onChange={(e) => setBgColor2(e.target.value)}
+                    className="flex-1 text-sm font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bg-color-3" className="text-xs font-bold">
+                  Color 3
+                </Label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    id="bg-color-3"
+                    value={bgColor3}
+                    onChange={(e) => setBgColor3(e.target.value)}
+                    className="w-12 h-8 rounded cursor-pointer border border-stone-300"
+                  />
+                  <Input
+                    value={bgColor3}
+                    onChange={(e) => setBgColor3(e.target.value)}
+                    className="flex-1 text-sm font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Dot Grid Settings */}
+            <div className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="dot-opacity" className="text-xs font-bold">
+                    Dot Grid Opacity
+                  </Label>
+                  <span className="text-xs text-stone-600">{dotOpacity}%</span>
+                </div>
+                <input
+                  type="range"
+                  id="dot-opacity"
+                  min="0"
+                  max="30"
+                  value={dotOpacity}
+                  onChange={(e) => setDotOpacity(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-xs text-stone-500 mt-1">
+                  Visibility of the dot grid pattern
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="dot-size" className="text-xs font-bold">
+                    Dot Size
+                  </Label>
+                  <span className="text-xs text-stone-600">{dotSize.toFixed(1)}px</span>
+                </div>
+                <input
+                  type="range"
+                  id="dot-size"
+                  min="0.5"
+                  max="5"
+                  step="0.5"
+                  value={dotSize}
+                  onChange={(e) => setDotSize(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-xs text-stone-500 mt-1">
+                  Size of individual dots
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="dot-spacing" className="text-xs font-bold">
+                    Dot Spacing
+                  </Label>
+                  <span className="text-xs text-stone-600">{dotSpacing}px</span>
+                </div>
+                <input
+                  type="range"
+                  id="dot-spacing"
+                  min="20"
+                  max="80"
+                  step="5"
+                  value={dotSpacing}
+                  onChange={(e) => setDotSpacing(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="text-xs text-stone-500 mt-1">
+                  Distance between dots
+                </p>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div
+              className="mt-4 p-4 rounded-lg border border-stone-300 h-32"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='${dotSpacing}' height='${dotSpacing}' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='${dotSpacing / 2}' cy='${dotSpacing / 2}' r='${dotSize}' fill='%23000' opacity='${dotOpacity / 100}'/%3E%3C/svg%3E")`,
+                backgroundSize: `${dotSpacing}px ${dotSpacing}px`,
+                backgroundPosition: "0 0",
+                background: `linear-gradient(to bottom right, ${bgColor1}, ${bgColor2}, ${bgColor3})`,
+                backgroundAttachment: "fixed",
+              }}
+            />
+            <p className="text-xs text-stone-500 mt-2">
+              Preview of your signature canvas background
+            </p>
+          </div>
+          </div>
 
         <DialogButtonGroup justify="between" gap="normal" className="flex-col sm:flex-row">
           <DialogSecondaryButton
