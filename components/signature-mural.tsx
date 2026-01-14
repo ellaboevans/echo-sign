@@ -1,6 +1,6 @@
 "use client";
 
-import { SignatureEntry, TenantBranding } from "@/types/types";
+import { SignatureEntry } from "@/types/types";
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,7 +9,6 @@ import { X } from "lucide-react";
 type Props = {
   entries: SignatureEntry[];
   spaceName: string;
-  branding?: TenantBranding;
 };
 
 interface SignaturePosition {
@@ -20,16 +19,7 @@ interface SignaturePosition {
   scale: number;
 }
 
-export default function SignatureMural({ entries, spaceName, branding }: Props) {
-  // Get mural background customizations or defaults
-  const muralBg = branding?.muralBackground || {};
-  const bgColor1 = muralBg.bgColor1 || "#FAF5F0";
-  const bgColor2 = muralBg.bgColor2 || "#FEFAF0";
-  const bgColor3 = muralBg.bgColor3 || "#FAF5F0";
-  const dotOpacity = muralBg.dotOpacity ?? 12;
-  const dotSize = muralBg.dotSize ?? 1.5;
-  const dotSpacing = muralBg.dotSpacing ?? 40;
-
+export default function SignatureMural({ entries, spaceName }: Props) {
   const [selectedEntry, setSelectedEntry] = useState<SignatureEntry | null>(null);
   const [positions, setPositions] = useState<Record<string, SignaturePosition>>(() => {
     // Initialize positions with random layout
@@ -101,18 +91,15 @@ export default function SignatureMural({ entries, spaceName, branding }: Props) 
       {/* Freeform Canvas */}
       <div
         ref={containerRef}
-        className="relative w-full overflow-hidden select-none"
-        style={{
-          minHeight: "100vh",
-          background: `linear-gradient(to bottom right, ${bgColor1}, ${bgColor2}, ${bgColor3})`,
-        }}
+        className="relative w-full bg-gradient-to-br from-stone-50 via-amber-50 to-stone-50 overflow-hidden select-none"
+        style={{ minHeight: "100vh" }}
       >
         {/* Apple Freeform Dot Grid Pattern */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='${dotSpacing}' height='${dotSpacing}' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='${dotSpacing / 2}' cy='${dotSpacing / 2}' r='${dotSize}' fill='%23000' opacity='${dotOpacity / 100}'/%3E%3C/svg%3E")`,
-            backgroundSize: `${dotSpacing}px ${dotSpacing}px`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='1.5' fill='%23000' opacity='0.12'/%3E%3C/svg%3E")`,
+            backgroundSize: "40px 40px",
             backgroundPosition: "0 0",
           }}
         />

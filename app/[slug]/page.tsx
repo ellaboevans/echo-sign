@@ -115,7 +115,7 @@ export default function SpaceSigningPage({
 
       {/* Mural Section */}
       {entries.length > 0 ? (
-        <SignatureMural entries={entries} spaceName={space.name} branding={tenant.branding} />
+        <SignatureMural entries={entries} spaceName={space.name} />
       ) : (
         <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-amber-100 flex items-center justify-center p-4">
           <div className="text-center max-w-md">
