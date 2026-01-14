@@ -50,8 +50,6 @@ export default function EntriesPage() {
             <SignatureCard
               key={entry.id}
               entry={entry}
-              isOwner={true}
-              onDelete={handleDelete}
             />
           ))}
         </div>

@@ -29,7 +29,9 @@ export default function FeaturedMemory({ entry }: FeaturedMemoryProps) {
         const data = await res.json();
         setReflection(data.reflection || "A profound moment captured for posterity.");
       } catch (error) {
-        console.error("Error fetching reflection:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching reflection:", error);
+        }
         setReflection("A shared fragment of a unique journey.");
       } finally {
         setIsLoading(false);

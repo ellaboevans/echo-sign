@@ -20,6 +20,10 @@ import { store } from "@/store/store";
 import { Space, Visibility, UserRole } from "@/types/types";
 import { useState } from "react";
 import { generateUUID } from "@/lib/uuid";
+import { showToast } from "@/lib/toast";
+import { MESSAGES } from "@/lib/messages";
+import { LoadingOverlay } from "@/components/ui/loading-spinner";
+import { ARIA_LABELS } from "@/lib/accessibility";
 
 interface SignDialogProps {
   space: Space;
@@ -35,7 +39,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
 
   const handleSave = async (data: string) => {
     if (!name.trim()) {
-      alert("A name is required to associate with your signature.");
+      showToast.error(MESSAGES.FORM.NAME_REQUIRED);
       return;
     }
 
@@ -43,7 +47,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
 
     const currentTenant = store.getCurrentTenant();
     if (!currentTenant) {
-      alert("Unable to find workspace");
+      showToast.error(MESSAGES.FORM.WORKSPACE_NOT_FOUND);
       setIsSubmitting(false);
       return;
     }
@@ -115,14 +119,16 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                 Your Name / Alias
               </label>
               <Input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="How should you be remembered?"
-                className="w-full rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm"
-                required
-              />
+                 id="name"
+                 type="text"
+                 value={name}
+                 onChange={(e) => setName(e.target.value)}
+                 placeholder="How should you be remembered?"
+                 className="w-full rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm"
+                 required
+                 aria-label={ARIA_LABELS.SIGNATURE.NAME}
+                 aria-required="true"
+               />
             </div>
             <div className="space-y-2">
               <label
@@ -137,6 +143,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="For recovery (never public)"
                 className="w-full rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm"
+                aria-label={ARIA_LABELS.SIGNATURE.EMAIL}
               />
             </div>
           </div>
@@ -152,7 +159,8 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
               value={memory}
               onChange={(e) => setMemory(e.target.value)}
               placeholder="Write a brief thought, message, or reflection..."
-              className="w-full px-2 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic"
+              className="w-full px-2.5 py-1 rounded-none border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic"
+              aria-label={ARIA_LABELS.SIGNATURE.MEMORY}
             />
           </div>
 
@@ -194,11 +202,7 @@ export default function SignDialog({ space }: Readonly<SignDialogProps>) {
           </div>
         </div>
 
-        {isSubmitting && (
-          <div className="absolute inset-0 bg-black/10 backdrop-blur-xs rounded-xl flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-amber-700 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
+        {isSubmitting && <LoadingOverlay />}
       </DialogContent>
     </Dialog>
   );

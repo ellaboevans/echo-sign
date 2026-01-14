@@ -1,5 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import type { SignaturePad as SignaturePadType } from "signature_pad";
+import { showToast } from "@/lib/toast";
+import { MESSAGES } from "@/lib/messages";
+import { ARIA_LABELS } from "@/lib/accessibility";
+import { DialogFullWidthButton, DialogSmallButton } from "@/components/ui/dialog-buttons";
 
 interface SignatureCanvasProps {
   onSave: (dataUrl: string) => void;
@@ -41,7 +45,7 @@ export default function SignatureCanvas({
 
   const handleSave = () => {
     if (signaturePadRef.current?.isEmpty()) {
-      alert("Please provide a signature first.");
+      showToast.error(MESSAGES.FORM.SIGNATURE_REQUIRED);
       return;
     }
     const dataUrl = signaturePadRef.current?.toDataURL("image/png");
@@ -54,25 +58,28 @@ export default function SignatureCanvas({
         <canvas
           ref={canvasRef}
           className="signature-canvas w-full h-48 rounded-lg cursor-crosshair"
+          aria-label={ARIA_LABELS.SIGNATURE.CANVAS}
+          role="img"
         />
-        <div className="absolute bottom-2 right-2 space-x-2">
-          <button
-            type="button"
+        <div className="absolute bottom-2 right-2">
+          <DialogSmallButton
             onClick={handleClear}
-            className="px-3 py-1 text-xs font-bold uppercase tracking-widest text-stone-500 hover:text-stone-900 bg-white/80 rounded border border-stone-200">
+            variant="secondary"
+          >
             Reset
-          </button>
+          </DialogSmallButton>
         </div>
       </div>
       <p className="mt-2 text-center text-xs text-stone-400 font-medium">
         Use your mouse or finger to sign above
       </p>
-      <button
-        type="button"
+      <DialogFullWidthButton
         onClick={handleSave}
-        className="mt-6 w-full bg-amber-700 text-white font-bold uppercase tracking-widest text-sm py-3 rounded-lg hover:bg-amber-800 transition-all duration-300 active:scale-95 shadow-lg shadow-stone-200">
+        type="button"
+        className="mt-6"
+      >
         Preserve Signature
-      </button>
+      </DialogFullWidthButton>
     </div>
   );
 }

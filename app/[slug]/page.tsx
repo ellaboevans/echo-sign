@@ -5,6 +5,8 @@ import { store } from "@/store/store";
 import SignatureCard from "@/components/signature-card";
 import SignWallDialog from "@/components/sign-wall-dialog";
 import Link from "next/link";
+import { Tenant, Space, SignatureEntry } from "@/types/types";
+import { getCurrentSubdomain } from "@/lib/subdomain";
 
 export default function SpaceSigningPage({
   params,
@@ -12,9 +14,9 @@ export default function SpaceSigningPage({
   params: Promise<{ slug: string }>;
 }) {
   const [slug, setSlug] = useState<string | null>(null);
-  const [tenant, setTenant] = useState<any>(null);
-  const [space, setSpace] = useState<any>(null);
-  const [entries, setEntries] = useState<any[]>([]);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [space, setSpace] = useState<Space | null>(null);
+  const [entries, setEntries] = useState<SignatureEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -24,53 +26,38 @@ export default function SpaceSigningPage({
   }, [params]);
 
   useEffect(() => {
-    if (!slug || typeof window === "undefined") return;
+    if (!slug) return;
 
-    const host = window.location.hostname;
-    let subdomain: string | null = null;
-
-    // Detect subdomain
-    if (host === "localhost" || host === "127.0.0.1" || host.startsWith("127.")) {
-      subdomain = null;
-    } else if (host === "lvh.me") {
-      subdomain = null;
-    } else if (host.endsWith(".lvh.me")) {
-      subdomain = host.replace(".lvh.me", "");
-    } else if (host.includes(".")) {
-      const parts = host.split(".");
-      if (parts.length > 2) {
-        subdomain = parts[0];
-      }
-    }
-
+    const subdomain = getCurrentSubdomain();
+    
     // Load tenant from subdomain
-    let foundTenant = null;
-    if (subdomain) {
-      foundTenant = store.getTenantBySubdomain(subdomain);
-    } else {
-      foundTenant = store.getCurrentTenant();
+    const foundTenant = subdomain
+      ? store.getTenantBySubdomain(subdomain)
+      : store.getCurrentTenant();
+
+    if (!foundTenant) {
+      setIsLoading(false);
+      return;
     }
 
     setTenant(foundTenant);
 
     // Load space by slug
-    if (foundTenant) {
-      const foundSpace = store.getSpaceBySlug(foundTenant.id, slug);
-      if (foundSpace) {
-        setSpace(foundSpace);
-        store.track(foundTenant.id, "view_space", { spaceId: foundSpace.id });
-        
-        const publicEntries = store.getPublicEntriesBySpace(foundSpace.id);
-        setEntries(publicEntries);
-      }
+    const foundSpace = store.getSpaceBySlug(foundTenant.id, slug);
+    if (foundSpace) {
+      setSpace(foundSpace);
+      store.track(foundTenant.id, "view_space", { spaceId: foundSpace.id });
+      
+      const publicEntries = store.getPublicEntriesBySpace(foundSpace.id);
+      setEntries(publicEntries);
+    } else {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }, [slug]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center">
         <div className="text-stone-500">Loading...</div>
       </div>
     );
@@ -78,7 +65,7 @@ export default function SpaceSigningPage({
 
   if (!space || !tenant) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center">
         <div className="text-center">
           <p className="text-stone-500 mb-4">Space not found</p>
           <Link href="/" className="text-amber-700 hover:text-amber-800">
@@ -90,7 +77,7 @@ export default function SpaceSigningPage({
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-stone-200 pb-10 mb-12">

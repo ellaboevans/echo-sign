@@ -5,7 +5,14 @@ import { store } from "@/store/store";
 import { Tenant, TenantBranding, User as UserType } from "@/types/types";
 import { useState, useEffect } from "react";
 import TenantBrandingDialog from "@/components/tenant-branding-dialog";
+import LogoutConfirmationDialog from "@/components/logout-confirmation-dialog";
 import { showToast } from "@/lib/toast";
+import {
+  settingsSchema,
+  getFieldError,
+  hasFieldError,
+} from "@/lib/validations";
+import { z } from "zod";
 import {
   Card,
   CardContent,
@@ -39,6 +46,9 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showBrandingDialog, setShowBrandingDialog] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [errors, setErrors] = useState<z.ZodError | null>(null);
 
   const [formData, setFormData] = useState({
     displayName: "",
@@ -50,35 +60,46 @@ export default function SettingsPage() {
     const currentTenant = store.getCurrentTenant();
     const currentUser = store.getCurrentUser();
 
-    const timer = setTimeout(() => {
-      setTenant(currentTenant);
-      setUser(currentUser);
-
-      if (currentTenant) {
-        setFormData({
-          displayName: currentTenant.displayName,
-          description: currentTenant.description || "",
-          userEmail: currentUser?.email || "",
-        });
-      }
-
+    if (!currentTenant || !currentUser) {
       setIsLoading(false);
-    }, 0);
+      return;
+    }
 
-    return () => clearTimeout(timer);
+    setTenant(currentTenant);
+    setUser(currentUser);
+
+    setFormData({
+      displayName: currentTenant.displayName,
+      description: currentTenant.description || "",
+      userEmail: currentUser.email || "",
+    });
+
+    setIsLoading(false);
   }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors(null);
     setIsSaving(true);
 
     try {
+      // Validate with Zod
+      const result = settingsSchema.safeParse(formData);
+
+      if (!result.success) {
+        setErrors(result.error);
+        setIsSaving(false);
+        const firstError = result.error.errors[0];
+        showToast.error(firstError.message);
+        return;
+      }
+
       // Update tenant
       if (tenant) {
         const updatedTenant = {
           ...tenant,
-          displayName: formData.displayName,
-          description: formData.description,
+          displayName: result.data.displayName,
+          description: result.data.description || undefined,
         };
         store.saveTenant(updatedTenant);
         setTenant(updatedTenant);
@@ -88,13 +109,14 @@ export default function SettingsPage() {
       if (user) {
         const updatedUser = {
           ...user,
-          email: formData.userEmail || undefined,
+          email: result.data.userEmail || undefined,
         };
         store.saveUser(updatedUser);
         setUser(updatedUser);
       }
 
       showToast.success("Settings saved successfully");
+      setErrors(null);
     } catch (error) {
       if (error instanceof Error) {
         showToast.error("Failed to save settings");
@@ -128,23 +150,24 @@ export default function SettingsPage() {
   };
 
   const handleLogout = () => {
-    if (
-      confirm(
-        "Are you sure? You will be logged out and redirected to the home page."
-      )
-    ) {
+    setShowLogoutConfirm(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setIsLoggingOut(true);
+    setTimeout(() => {
       store.clearCurrentUser();
       const protocol = globalThis.location.protocol;
       const port = globalThis.location.port
         ? `:${globalThis.location.port}`
         : "";
       globalThis.location.href = `${protocol}//lvh.me${port}/`;
-    }
+    }, 300);
   };
 
   if (isLoading || !tenant || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -175,7 +198,7 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="displayName">
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
+                    <User className="size-4" />
                     Your Name
                   </div>
                 </Label>
@@ -183,20 +206,32 @@ export default function SettingsPage() {
                   id="displayName"
                   type="text"
                   value={formData.displayName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, displayName: e.target.value })
+                  onChange={(e) => {
+                    setFormData({ ...formData, displayName: e.target.value });
+                    if (errors) setErrors(null);
+                  }}
+                  className={
+                    hasFieldError(errors, "displayName")
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
                   }
                   required
                 />
-                <p className="text-xs text-muted-foreground">
-                  This is displayed at the top of your dashboard
-                </p>
+                {hasFieldError(errors, "displayName") ? (
+                  <p className="text-xs text-red-600 font-medium">
+                    {getFieldError(errors, "displayName")}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    This is displayed at the top of your dashboard
+                  </p>
+                )}
               </div>
               {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email">
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
+                    <Mail className="size-4" />
                     Email
                   </div>
                 </Label>
@@ -204,34 +239,63 @@ export default function SettingsPage() {
                   id="email"
                   type="email"
                   value={formData.userEmail}
-                  onChange={(e) =>
-                    setFormData({ ...formData, userEmail: e.target.value })
+                  onChange={(e) => {
+                    setFormData({ ...formData, userEmail: e.target.value });
+                    if (errors) setErrors(null);
+                  }}
+                  className={
+                    hasFieldError(errors, "userEmail")
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
                   }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Used for account recovery (never shown publicly)
-                </p>
+                {hasFieldError(errors, "userEmail") ? (
+                  <p className="text-xs text-red-600 font-medium">
+                    {getFieldError(errors, "userEmail")}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Used for account recovery (never shown publicly)
+                  </p>
+                )}
               </div>
               {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
+                    <FileText className="size-4" />
                     Account Description
                   </div>
                 </Label>
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, description: e.target.value });
+                    if (errors) setErrors(null);
+                  }}
                   placeholder="Tell visitors about your wall. This appears on your public profile."
-                  className="h-24 resize-none"
+                  className={`h-24 resize-none ${
+                    hasFieldError(errors, "description")
+                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                      : ""
+                  }`}
+                  maxLength={200}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Optional description visible on your tenant homepage
-                </p>
+                <div className="flex justify-between items-center">
+                  {hasFieldError(errors, "description") ? (
+                    <p className="text-xs text-red-600 font-medium">
+                      {getFieldError(errors, "description")}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Optional description visible on your tenant homepage
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground ml-auto">
+                    {formData.description.length}/200 characters
+                  </p>
+                </div>
               </div>
             </form>
           </CardContent>
@@ -242,7 +306,7 @@ export default function SettingsPage() {
               className="w-full">
               {isSaving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                   Saving...
                 </>
               ) : (
@@ -352,7 +416,7 @@ export default function SettingsPage() {
               onClick={() => setShowBrandingDialog(true)}
               variant="secondary"
               className="w-full">
-              <Palette className="mr-2 h-4 w-4" />
+              <Palette className="mr-2 size-4" />
               {tenant.branding?.primaryColor
                 ? "Edit Branding"
                 : "Set Up Branding"}
@@ -375,7 +439,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>
                 <div className="flex items-center gap-2">
-                  <Link2 className="h-4 w-4" />
+                  <Link2 className="size-4" />
                   Subdomain
                 </div>
               </Label>
@@ -389,7 +453,7 @@ export default function SettingsPage() {
                   variant="outline"
                   size="icon"
                   onClick={handleCopySubdomain}>
-                  <Copy className="h-4 w-4" />
+                  <Copy className="size-4" />
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -401,7 +465,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label>
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="size-4" />
                   Account Created
                 </div>
               </Label>
@@ -496,6 +560,14 @@ export default function SettingsPage() {
         isOpen={showBrandingDialog}
         onClose={() => setShowBrandingDialog(false)}
         onSave={handleSaveBranding}
+      />
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmationDialog
+        open={showLogoutConfirm}
+        onOpenChange={setShowLogoutConfirm}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
       />
     </div>
   );

@@ -1,21 +1,29 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { DialogFullWidthButton } from "@/components/ui/dialog-buttons";
 import { store } from "@/store/store";
 import { Tenant, User, UserRole } from "@/types/types";
 import { useState } from "react";
 import { generateUUID } from "@/lib/uuid";
 import { showToast } from "@/lib/toast";
+import {
+  signupSchema,
+  type SignupFormData,
+  getFieldError,
+  hasFieldError,
+} from "@/lib/validations";
+import { z } from "zod";
+import { ARIA_LABELS, ARIA_DESCRIPTIONS } from "@/lib/accessibility";
 
 export default function SignupForm() {
-
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SignupFormData>({
     ownerName: "",
     ownerEmail: "",
     subdomainName: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<z.ZodError | null>(null);
   const [subdomainAvailable, setSubdomainAvailable] = useState<boolean | null>(
     null
   );
@@ -41,40 +49,36 @@ export default function SignupForm() {
     const value = e.target.value;
     setFormData((prev) => ({ ...prev, subdomainName: value }));
     checkSubdomainAvailability(value);
+    // Clear errors when user types
+    if (errors) {
+      setErrors(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrors(null);
 
     try {
-      const { ownerName, ownerEmail, subdomainName } = formData;
+      // Validate with Zod
+      const result = signupSchema.safeParse(formData);
 
-      // Validate inputs
-      if (!ownerName.trim()) {
-        const msg = "Owner name is required";
-        showToast.error(msg);
+      if (!result.success) {
+        setErrors(result.error);
         setIsLoading(false);
+        // Show first error message
+        const firstError = result.error.errors[0];
+        showToast.error(firstError.message);
         return;
       }
 
+      const { ownerName, ownerEmail, subdomainName } = result.data;
+
+      // Normalize subdomain
       const subdomain = subdomainName
         .toLowerCase()
         .replaceAll(/[^a-z0-9-]/g, "");
-
-      if (subdomain.length < 3) {
-        const msg = "Subdomain must be at least 3 characters";
-        showToast.error(msg);
-        setIsLoading(false);
-        return;
-      }
-
-      if (subdomainAvailable === false) {
-        const msg = "Subdomain is already taken";
-        showToast.error(msg);
-        setIsLoading(false);
-        return;
-      }
 
       // Create owner user
       const userId = generateUUID();
@@ -138,9 +142,7 @@ export default function SignupForm() {
         dashboardUrl = `https://${subdomain}.echosign.io/dashboard`;
       }
 
-      setTimeout(() => {
-        globalThis.location.href = dashboardUrl;
-      }, 500);
+      globalThis.location.href = dashboardUrl;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "An error occurred";
       showToast.error(msg);
@@ -158,16 +160,30 @@ export default function SignupForm() {
           Your Name
         </label>
         <Input
-          id="ownerName"
-          type="text"
-          value={formData.ownerName}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, ownerName: e.target.value }))
-          }
-          placeholder="e.g., Jane Doe"
-          className="w-full"
-          required
-        />
+           id="ownerName"
+           type="text"
+           value={formData.ownerName}
+           onChange={(e) => {
+             setFormData((prev) => ({ ...prev, ownerName: e.target.value }));
+             if (errors) setErrors(null);
+           }}
+           placeholder="e.g., Jane Doe"
+           className={`w-full ${
+             hasFieldError(errors, "ownerName")
+               ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+               : ""
+           }`}
+           required
+           aria-label={ARIA_LABELS.SIGNATURE.NAME}
+           aria-required="true"
+           aria-invalid={hasFieldError(errors, "ownerName")}
+           aria-describedby={hasFieldError(errors, "ownerName") ? ARIA_DESCRIPTIONS.SIGNUP.NAME_ERROR : undefined}
+         />
+        {hasFieldError(errors, "ownerName") && (
+          <p className="text-xs text-red-600 font-medium">
+            {getFieldError(errors, "ownerName")}
+          </p>
+        )}
       </div>
 
       {/* Email */}
@@ -178,15 +194,28 @@ export default function SignupForm() {
           Email (Optional)
         </label>
         <Input
-          id="ownerEmail"
-          type="email"
-          value={formData.ownerEmail}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, ownerEmail: e.target.value }))
-          }
-          placeholder="your@email.com"
-          className="w-full"
-        />
+           id="ownerEmail"
+           type="email"
+           value={formData.ownerEmail || ""}
+           onChange={(e) => {
+             setFormData((prev) => ({ ...prev, ownerEmail: e.target.value }));
+             if (errors) setErrors(null);
+           }}
+           placeholder="your@email.com"
+           className={`w-full ${
+             hasFieldError(errors, "ownerEmail")
+               ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+               : ""
+           }`}
+           aria-label={ARIA_LABELS.SIGNATURE.EMAIL}
+           aria-invalid={hasFieldError(errors, "ownerEmail")}
+           aria-describedby={hasFieldError(errors, "ownerEmail") ? ARIA_DESCRIPTIONS.SIGNUP.EMAIL_ERROR : undefined}
+         />
+        {hasFieldError(errors, "ownerEmail") && (
+          <p className="text-xs text-red-600 font-medium">
+            {getFieldError(errors, "ownerEmail")}
+          </p>
+        )}
       </div>
 
       {/* Subdomain */}
@@ -198,34 +227,46 @@ export default function SignupForm() {
         </label>
         <div className="flex items-center gap-2">
           <Input
-            id="subdomainName"
-            type="text"
-            value={formData.subdomainName}
-            onChange={handleSubdomainChange}
-            placeholder="e.g., cs"
-            className="flex-1"
-            required
-          />
-          <span className="text-sm text-stone-500">.echosign.io</span>
+             id="subdomainName"
+             type="text"
+             value={formData.subdomainName}
+             onChange={handleSubdomainChange}
+             placeholder="e.g., cs"
+             className={`flex-1 ${
+               hasFieldError(errors, "subdomainName") ||
+               subdomainAvailable === false
+                 ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                 : ""
+             }`}
+             required
+             aria-label={ARIA_LABELS.SPACE.NAME}
+             aria-required="true"
+             aria-invalid={hasFieldError(errors, "subdomainName") || subdomainAvailable === false}
+             aria-describedby={hasFieldError(errors, "subdomainName") ? ARIA_DESCRIPTIONS.SIGNUP.SUBDOMAIN_ERROR : undefined}
+           />
+          <span className="text-xs text-stone-500 whitespace-nowrap">.echosign.io</span>
         </div>
         <p className="text-xs text-stone-500">
-          Your unique wall URL (3+ characters, alphanumeric + dashes)
+          Your unique wall URL (3-30 characters, lowercase letters, numbers, and dashes)
         </p>
         {subdomainAvailable === true && (
           <p className="text-xs text-green-600 font-semibold">✓ Available</p>
         )}
-        {subdomainAvailable === false && (
-          <p className="text-xs text-red-600 font-semibold">✗ Already taken</p>
+        {(subdomainAvailable === false || hasFieldError(errors, "subdomainName")) && (
+          <p className="text-xs text-red-600 font-semibold">
+            {getFieldError(errors, "subdomainName") || "✗ Already taken"}
+          </p>
         )}
       </div>
 
       {/* Submit Button */}
-      <Button
+      <DialogFullWidthButton
         type="submit"
-        disabled={isLoading || subdomainAvailable === false}
-        className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold uppercase">
+        disabled={isLoading || subdomainAvailable === false || !!errors}
+        isLoading={isLoading}
+      >
         {isLoading ? "Setting up..." : "Get Started"}
-      </Button>
+      </DialogFullWidthButton>
     </form>
   );
 }

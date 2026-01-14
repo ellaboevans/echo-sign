@@ -35,7 +35,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ reflection }, { status: 200 });
   } catch (error) {
-    console.error("Groq API error:", error);
+    // Server-side error logging - keep for debugging
+    if (process.env.NODE_ENV === "development") {
+      console.error("Groq API error:", error);
+    }
     return NextResponse.json(
       {
         reflection: "A shared fragment of a unique journey.",

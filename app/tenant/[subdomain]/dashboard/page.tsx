@@ -5,11 +5,13 @@ import { useTenant } from "@/store/tenant-context";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+import { SignatureEntry } from "@/types/types";
+
 interface Stats {
   totalSignatures: number;
   totalViews: number;
   totalSigns: number;
-  lastEntry: any | null;
+  lastEntry: SignatureEntry | null;
 }
 
 export default function DashboardPage() {

@@ -9,14 +9,18 @@ export function setItem(key: string, value: string) {
   try {
     localStorage.setItem(key, value);
   } catch (e) {
-    console.error("localStorage error:", e);
+    if (process.env.NODE_ENV === "development") {
+      console.error("localStorage error:", e);
+    }
   }
 
   // Also save to cookie (works across subdomains)
   try {
     document.cookie = `${key}=${encodeURIComponent(value)}; path=/; domain=${COOKIE_DOMAIN}; max-age=31536000; SameSite=Lax`;
   } catch (e) {
-    console.error("cookie error:", e);
+    if (process.env.NODE_ENV === "development") {
+      console.error("cookie error:", e);
+    }
   }
 }
 
@@ -28,7 +32,9 @@ export function getItem(key: string): string | null {
     const value = localStorage.getItem(key);
     if (value) return value;
   } catch (e) {
-    console.error("localStorage error:", e);
+    if (process.env.NODE_ENV === "development") {
+      console.error("localStorage error:", e);
+    }
   }
 
   // Fall back to cookies
@@ -42,7 +48,9 @@ export function getItem(key: string): string | null {
       }
     }
   } catch (e) {
-    console.error("cookie error:", e);
+    if (process.env.NODE_ENV === "development") {
+      console.error("cookie error:", e);
+    }
   }
 
   return null;
@@ -55,13 +63,17 @@ export function removeItem(key: string) {
   try {
     localStorage.removeItem(key);
   } catch (e) {
-    console.error("localStorage error:", e);
+    if (process.env.NODE_ENV === "development") {
+      console.error("localStorage error:", e);
+    }
   }
 
   // Remove from cookies
   try {
     document.cookie = `${key}=; path=/; domain=${COOKIE_DOMAIN}; max-age=0; SameSite=Lax`;
   } catch (e) {
-    console.error("cookie error:", e);
+    if (process.env.NODE_ENV === "development") {
+      console.error("cookie error:", e);
+    }
   }
 }

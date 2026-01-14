@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import LogoutConfirmationDialog from "@/components/logout-confirmation-dialog";
 import {
   LayoutDashboard,
   LayoutGrid,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tenant, User } from "@/types/types";
+import { getCurrentSubdomain } from "@/lib/subdomain";
 
 export default function DashboardLayout({
   children,
@@ -25,68 +27,50 @@ export default function DashboardLayout({
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
-    if (typeof globalThis === "undefined") return;
+    if (typeof window === "undefined") return;
 
-    const host = globalThis.location.hostname;
-    let subdomain: string | null = null;
-
-    // Detect subdomain (same logic as root page)
-    if (host.endsWith(".lvh.me")) {
-      subdomain = host.replace(".lvh.me", "");
-    } else if (
-      host !== "localhost" &&
-      host !== "127.0.0.1" &&
-      !host.startsWith("127.") &&
-      host !== "lvh.me" &&
-      host.includes(".")
-    ) {
-      const parts = host.split(".");
-      if (parts.length > 2) {
-        subdomain = parts[0];
-      }
-    }
+    const subdomain = getCurrentSubdomain();
 
     // Load tenant from subdomain
-    let foundTenant: Tenant | null = null;
-    let foundUser: User | null = null;
-
-    if (subdomain) {
-      foundTenant = store.getTenantBySubdomain(subdomain)!;
-    } else {
-      // Fallback: try to get from localStorage
-      foundTenant = store.getCurrentTenant();
-    }
+    const foundTenant = subdomain
+      ? store.getTenantBySubdomain(subdomain)
+      : store.getCurrentTenant();
 
     // Get user from localStorage
-    foundUser = store.getCurrentUser();
+    const foundUser = store.getCurrentUser();
 
-    const timer = setTimeout(() => {
-      // Verify user is owner of this tenant
-      if (foundTenant && foundUser && foundUser.id === foundTenant.ownerId) {
-        setTenant(foundTenant);
-        setUser(foundUser);
-      }
+    // Verify user is owner of this tenant
+    if (foundTenant && foundUser && foundUser.id === foundTenant.ownerId) {
+      setTenant(foundTenant);
+      setUser(foundUser);
+    }
 
-      setIsLoading(false);
-    }, 0);
-
-    return () => clearTimeout(timer);
+    setIsLoading(false);
   }, []);
 
-  const handleLogout = () => {
-    store.clearCurrentUser();
-    // Redirect to root domain landing page
-    const protocol = globalThis.location.protocol;
-    const port = globalThis.location.port ? `:${globalThis.location.port}` : "";
-    globalThis.location.href = `${protocol}//lvh.me${port}/`;
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setIsLoggingOut(true);
+    setTimeout(() => {
+      store.clearCurrentUser();
+      // Redirect to root domain landing page
+      const protocol = globalThis.location.protocol;
+      const port = globalThis.location.port ? `:${globalThis.location.port}` : "";
+      globalThis.location.href = `${protocol}//lvh.me${port}/`;
+    }, 300);
   };
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="min-h-dvh">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -94,7 +78,7 @@ export default function DashboardLayout({
 
   if (!tenant || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="min-h-dvh">
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">
             Access denied or not logged in
@@ -140,9 +124,9 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       {/* Sidebar Navigation */}
-      <div className="fixed left-0 top-0 z-40 h-screen w-64 border-r bg-card">
+      <div className="fixed left-0 top-0 z-40 h-dvh w-64 border-r bg-card">
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="border-b px-6 py-4">
@@ -168,7 +152,7 @@ export default function DashboardLayout({
                       ? "bg-amber-700 text-white"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}>
-                  <Icon className="h-4 w-4" />
+                  <Icon className="size-4" />
                   {item.title}
                 </Link>
               );
@@ -178,7 +162,7 @@ export default function DashboardLayout({
           {/* User Section */}
           <div className="border-t p-4">
             <div className="flex items-center gap-3 mb-3">
-              <Avatar className="h-9 w-9">
+              <Avatar className="size-9">
                 <AvatarFallback className="text-xs">
                   {getInitials(user.name)}
                 </AvatarFallback>
@@ -196,8 +180,8 @@ export default function DashboardLayout({
               variant="ghost"
               size="sm"
               className="w-full justify-start"
-              onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
+              onClick={handleLogoutClick}>
+              <LogOut className="mr-2 size-4" />
               Logout
             </Button>
           </div>
@@ -206,6 +190,14 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <div className="ml-64">{children}</div>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmationDialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+        onConfirm={handleConfirmLogout}
+        isLoading={isLoggingOut}
+      />
     </div>
   );
 }

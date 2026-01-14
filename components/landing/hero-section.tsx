@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { LoginDialog } from "@/components/login-dialog";
+import { LandingButton } from "@/components/landing/landing-button";
 
 export default function HeroSection() {
   const containerVariants = {
@@ -16,6 +18,8 @@ export default function HeroSection() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
   };
+
+  const [loginOpen, setLoginOpen] = useState(false);
 
   return (
     <section className="relative z-10 min-h-screen flex items-center justify-center px-4 py-20">
@@ -55,18 +59,14 @@ export default function HeroSection() {
           variants={itemVariants}
           className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
         >
-          <Link
-            href="/onboarding"
-            className="px-8 py-4 bg-amber-700 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-amber-800 transition-all shadow-xl shadow-stone-200 active:scale-95"
-          >
+          <LandingButton href="/onboarding" variant="primary">
             Get Started Free
-          </Link>
-          <Link
-            href="/login"
-            className="px-8 py-4 bg-white text-stone-900 font-bold uppercase tracking-widest rounded-lg border-2 border-stone-200 hover:border-amber-700 hover:text-amber-700 transition-all"
-          >
-            Sign In
-          </Link>
+          </LandingButton>
+          <LoginDialog>
+            <LandingButton variant="secondary" onClick={() => setLoginOpen(true)}>
+              Sign In
+            </LandingButton>
+          </LoginDialog>
         </motion.div>
 
         {/* Trust Signal */}

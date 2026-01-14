@@ -13,6 +13,10 @@ import { store } from "@/store/store";
 import { Space, Visibility } from "@/types/types";
 import { generateUUID } from "@/lib/uuid";
 import { cn } from "@/lib/utils";
+import { showToast } from "@/lib/toast";
+import { MESSAGES } from "@/lib/messages";
+import { ARIA_LABELS } from "@/lib/accessibility";
+import { DialogPrimaryButton, DialogSecondaryButton, DialogButtonGroup } from "@/components/ui/dialog-buttons";
 
 interface CreateSpaceDialogProps {
   children?: React.ReactNode;
@@ -37,7 +41,7 @@ export default function CreateSpaceDialog({
 
     const tenant = store.getCurrentTenant();
     if (!tenant) {
-      alert("No tenant found. Please sign in first.");
+      showToast.error(MESSAGES.FORM.WORKSPACE_NOT_FOUND);
       setIsSubmitting(false);
       return;
     }
@@ -102,9 +106,10 @@ export default function CreateSpaceDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Class of 2024 Legacy"
-              className="w-full px-5 py-4 rounded-xl border border-stone-200 focus:outline-none focus:ring-4 focus:ring-amber-700/5 focus:border-amber-700 transition-all text-lg font-medium h-auto"
               required
               maxLength={40}
+              aria-label={ARIA_LABELS.SPACE.NAME}
+              aria-required="true"
             />
           </div>
 
@@ -119,8 +124,9 @@ export default function CreateSpaceDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What should people think about when signing here?"
-              className="w-full px-5 py-4 rounded-xl border border-stone-200 focus:outline-none focus:ring-4 focus:ring-amber-700/5 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic"
+              className="w-full px-2.5 py-1 rounded-none border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic"
               maxLength={200}
+              aria-label={ARIA_LABELS.SPACE.DESCRIPTION}
             />
           </div>
 
@@ -171,21 +177,21 @@ export default function CreateSpaceDialog({
             </div>
           </div>
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <button
-              type="button"
+          <DialogButtonGroup>
+            <DialogSecondaryButton
               onClick={() => setOpen(false)}
               disabled={isSubmitting}
-              className="px-6 py-2 border border-stone-200 active:scale-95 duration-300 rounded-lg text-stone-900 font-medium hover:bg-stone-50 transition-colors disabled:opacity-50">
+            >
               Cancel
-            </button>
-            <button
-              type="submit"
+            </DialogSecondaryButton>
+            <DialogPrimaryButton
               disabled={isSubmitting}
-              className="px-6 py-2 bg-amber-700 text-white font-bold uppercase tracking-widest rounded-lg hover:bg-amber-800 active:scale-95 duration-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-              {isSubmitting ? "Creating..." : "Create Space"}
-            </button>
-          </div>
+              isLoading={isSubmitting}
+              type="submit"
+            >
+              Create Space
+            </DialogPrimaryButton>
+          </DialogButtonGroup>
         </form>
       </DialogContent>
     </Dialog>

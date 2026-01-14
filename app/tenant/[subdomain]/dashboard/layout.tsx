@@ -22,7 +22,7 @@ export default function DashboardLayout({
 
   if (!tenant || !isOwner) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center">
         <div className="text-center">
           <p className="text-stone-500">Access denied</p>
         </div>
@@ -31,9 +31,9 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-dvh bg-stone-50">
       {/* Sidebar Navigation */}
-      <div className="fixed left-0 top-0 w-64 h-screen bg-white border-r border-stone-200 p-6 space-y-8">
+      <div className="fixed left-0 top-0 w-64 h-dvh bg-white border-r border-stone-200 p-6 space-y-8">
         <div>
           <h2 className="text-2xl font-display font-bold text-stone-900">
             {tenant.displayName}

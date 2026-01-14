@@ -25,33 +25,30 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     const currentTenant = store.getCurrentTenant();
-    timer = setTimeout(() => {
-      setTenant(currentTenant);
-    }, 0);
-
-    if (currentTenant) {
-      const spaces = store.getSpacesByTenant(currentTenant.id);
-      const entries = store
-        .getEntriesByTenant(currentTenant.id)
-        .filter((e) => !e.deletedAt);
-      const analytics = store.getAnalyticsByTenant(currentTenant.id);
-
-      timer = setTimeout(() => {
-        setStats({
-          totalSpaces: spaces.length,
-          totalSignatures: entries.length,
-          totalViews: analytics.filter((a) => a.type === "view_wall").length,
-        });
-      }, 0);
+    
+    if (!currentTenant) {
+      return;
     }
-    return () => clearTimeout(timer);
+
+    setTenant(currentTenant);
+
+    const spaces = store.getSpacesByTenant(currentTenant.id);
+    const entries = store
+      .getEntriesByTenant(currentTenant.id)
+      .filter((e) => !e.deletedAt);
+    const analytics = store.getAnalyticsByTenant(currentTenant.id);
+
+    setStats({
+      totalSpaces: spaces.length,
+      totalSignatures: entries.length,
+      totalViews: analytics.filter((a) => a.type === "view_wall").length,
+    });
   }, []);
 
   if (!tenant || !stats) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -104,7 +101,7 @@ export default function DashboardPage() {
                 <CardTitle className="text-sm font-medium">
                   {stat.title}
                 </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <Icon className="size-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
@@ -176,28 +173,28 @@ export default function DashboardPage() {
             <Link href="/dashboard/spaces" className="block">
               <Button variant="outline" className="w-full justify-between">
                 <span className="flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4" />
+                  <LayoutGrid className="size-4" />
                   Manage Spaces
                 </span>
-                <ArrowUpRight className="h-4 w-4" />
+                <ArrowUpRight className="size-4" />
               </Button>
             </Link>
             <Link href="/dashboard/entries" className="block">
               <Button variant="outline" className="w-full justify-between">
                 <span className="flex items-center gap-2">
-                  <PenTool className="h-4 w-4" />
+                  <PenTool className="size-4" />
                   View Signatures
                 </span>
-                <ArrowUpRight className="h-4 w-4" />
+                <ArrowUpRight className="size-4" />
               </Button>
             </Link>
             <Link href="/dashboard/analytics" className="block">
               <Button variant="outline" className="w-full justify-between">
                 <span className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" />
+                  <Eye className="size-4" />
                   View Analytics
                 </span>
-                <ArrowUpRight className="h-4 w-4" />
+                <ArrowUpRight className="size-4" />
               </Button>
             </Link>
           </CardContent>

@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import {
   Loader2,
   Filter,
 } from "lucide-react";
+import { DeleteEntryDialog } from "@/components/delete-entry-dialog";
 import {
   Select,
   SelectContent,
@@ -30,6 +32,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import Link from "next/link";
 
 interface EntryWithSpace extends SignatureEntry {
   spaceName: string;
@@ -48,36 +51,29 @@ export default function EntriesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     const currentTenant = store.getCurrentTenant();
-    timer = setTimeout(() => {
-      setTenant(currentTenant);
-    }, 0);
-
-    if (currentTenant) {
-      const tenantSpaces = store.getSpacesByTenant(currentTenant.id);
-      timer = setTimeout(() => {
-        setSpaces(tenantSpaces);
-      }, 0);
-
-      const tenantEntries = store.getEntriesByTenant(currentTenant.id);
-      const entriesWithSpace = tenantEntries.map((entry) => {
-        const space = tenantSpaces.find((s) => s.id === entry.spaceId);
-        return {
-          ...entry,
-          spaceName: space?.name || "Unknown Space",
-          spaceSlug: space?.slug || "",
-        };
-      });
-      timer = setTimeout(() => {
-        setEntries(entriesWithSpace);
-      }, 0);
-    }
-    timer = setTimeout(() => {
+    
+    if (!currentTenant) {
       setIsLoading(false);
-    }, 0);
+      return;
+    }
 
-    return () => clearTimeout(timer);
+    setTenant(currentTenant);
+
+    const tenantSpaces = store.getSpacesByTenant(currentTenant.id);
+    setSpaces(tenantSpaces);
+
+    const tenantEntries = store.getEntriesByTenant(currentTenant.id);
+    const entriesWithSpace = tenantEntries.map((entry) => {
+      const space = tenantSpaces.find((s) => s.id === entry.spaceId);
+      return {
+        ...entry,
+        spaceName: space?.name || "Unknown Space",
+        spaceSlug: space?.slug || "",
+      };
+    });
+    setEntries(entriesWithSpace);
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -91,23 +87,17 @@ export default function EntriesPage() {
       filtered = filtered.filter((e) => e.visibility === filterVisibility);
     }
 
-    const timer = setTimeout(() => {
-      setFilteredEntries(filtered);
-    }, 0);
-
-    return () => clearTimeout(timer);
+    setFilteredEntries(filtered);
   }, [entries, filterSpace, filterVisibility]);
 
   const handleDeleteEntry = (entryId: string) => {
-    if (confirm("Delete this signature? This action cannot be undone.")) {
-      store.deleteEntry(entryId);
-      setEntries(entries.filter((e) => e.id !== entryId));
-    }
+    store.deleteEntry(entryId);
+    setEntries(entries.filter((e) => e.id !== entryId));
   };
 
   if (isLoading || !tenant) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -142,8 +132,8 @@ export default function EntriesPage() {
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Signatures</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-3xl font-bold tracking-tight text-balance">Signatures</h2>
+        <p className="text-muted-foreground text-pretty">
           View and manage all signatures across your spaces
         </p>
       </div>
@@ -152,10 +142,10 @@ export default function EntriesPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-balance">
               Total Signatures
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeEntries.length}</div>
@@ -165,10 +155,10 @@ export default function EntriesPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-balance">
               Public Signatures
             </CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <Eye className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{publicCount}</div>
@@ -178,10 +168,10 @@ export default function EntriesPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-sm font-medium text-balance">
               Private Signatures
             </CardTitle>
-            <Lock className="h-4 w-4 text-muted-foreground" />
+            <Lock className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{privateCount}</div>
@@ -194,10 +184,10 @@ export default function EntriesPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <CardTitle>Filters</CardTitle>
+            <Filter className="size-4" />
+            <CardTitle className="text-balance">Filters</CardTitle>
           </div>
-          <CardDescription>
+          <CardDescription className="text-pretty">
             Filter signatures by space and visibility
           </CardDescription>
         </CardHeader>
@@ -256,7 +246,7 @@ export default function EntriesPage() {
       {activeEntries.length > 0 ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
+            <h3 className="text-lg font-semibold text-balance">
               {activeEntries.length} Signature
               {activeEntries.length === 1 ? "" : "s"}
             </h3>
@@ -269,10 +259,10 @@ export default function EntriesPage() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
-                      <CardTitle className="text-lg">
+                      <CardTitle className="text-lg text-balance">
                         {entry.userName}
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-pretty">
                         Signed:{" "}
                         <span className="font-medium text-foreground">
                           {entry.spaceName}
@@ -296,8 +286,8 @@ export default function EntriesPage() {
                     <Separator />
                     <CardContent className="py-4 h-full bg-gray-100">
                       <div className="flex gap-3">
-                        <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                        <p className="text-sm text-muted-foreground italic">
+                        <MessageSquare className="size-4 text-muted-foreground mt-0.5 shrink-0" />
+                        <p className="text-sm text-muted-foreground italic text-pretty">
                           &ldquo;{entry.memoryText}&rdquo;
                         </p>
                       </div>
@@ -315,12 +305,15 @@ export default function EntriesPage() {
                         {new Date(entry.createdAt).toLocaleTimeString()}
                       </span>
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteEntry(entry.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <DeleteEntryDialog onConfirm={() => handleDeleteEntry(entry.id)}>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <Trash2 className="size-4" />
+                        <span className="sr-only">Delete signature</span>
+                      </Button>
+                    </DeleteEntryDialog>
                   </div>
                 </CardContent>
               </Card>
@@ -330,17 +323,24 @@ export default function EntriesPage() {
       ) : (
         <Card className="border-dashed">
           <CardHeader className="text-center pb-4">
-            <CardTitle>
+            <CardTitle className="text-balance">
               {entries.length === 0
                 ? "No signatures yet"
                 : "No signatures match your filters"}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-pretty">
               {entries.length === 0
                 ? "Once guests sign your spaces, they'll appear here"
                 : "Try adjusting your filters"}
             </CardDescription>
           </CardHeader>
+          {entries.length === 0 && (
+            <CardFooter className="justify-center">
+                <Link href="/dashboard/spaces">
+                    <Button>Share a Space</Button>
+                </Link>
+            </CardFooter>
+          )}
         </Card>
       )}
     </div>

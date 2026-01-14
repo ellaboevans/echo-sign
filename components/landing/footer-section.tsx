@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
+
 export default function FooterSection() {
   return (
     <footer className="relative z-10 border-t border-stone-200 bg-stone-50 py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-4 gap-12 mb-12">
+        <div className="grid md:grid-cols-5 gap-12 mb-12">
           <div>
             <h3 className="text-lg font-display font-bold text-stone-900 mb-4">
               Echo Sign
@@ -64,6 +66,26 @@ export default function FooterSection() {
               <li>
                 <a href="#" className="hover:text-amber-700 transition">
                   Terms
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-stone-900 mb-4">Resources</h4>
+            <ul className="space-y-2 text-sm text-stone-600">
+              <li>
+                <Link href="/design-system" className="hover:text-amber-700 transition">
+                  Design System
+                </Link>
+              </li>
+              <li>
+                <a href="#" className="hover:text-amber-700 transition">
+                  Documentation
+                </a>
+              </li>
+              <li>
+                <a href="#" className="hover:text-amber-700 transition">
+                  Status
                 </a>
               </li>
             </ul>

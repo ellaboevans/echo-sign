@@ -8,11 +8,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DialogSecondaryButton, DialogPrimaryButton, DialogButtonGroup } from "@/components/ui/dialog-buttons";
 
 interface TenantBrandingDialogProps {
   branding: TenantBranding | undefined;
@@ -121,12 +120,12 @@ export default function TenantBrandingDialog({
                   className="w-full text-sm"
                 />
                 {coverImagePreview && (
-                  <button
-                    onClick={() => setCoverImagePreview(null)}
-                    className="mt-2 text-xs text-red-600 hover:text-red-700 font-bold">
-                    Remove Image
-                  </button>
-                )}
+                   <button
+                     onClick={() => setCoverImagePreview(null)}
+                     className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium transition-colors">
+                     Remove Image
+                   </button>
+                 )}
               </div>
             </div>
             {coverImagePreview && (
@@ -157,12 +156,12 @@ export default function TenantBrandingDialog({
                   className="w-full text-sm"
                 />
                 {logoImagePreview && (
-                  <button
-                    onClick={() => setLogoImagePreview(null)}
-                    className="mt-2 text-xs text-red-600 hover:text-red-700 font-bold">
-                    Remove Image
-                  </button>
-                )}
+                   <button
+                     onClick={() => setLogoImagePreview(null)}
+                     className="mt-2 text-xs text-red-600 hover:text-red-700 font-medium transition-colors">
+                     Remove Image
+                   </button>
+                 )}
               </div>
             </div>
             {logoImagePreview && (
@@ -196,7 +195,7 @@ export default function TenantBrandingDialog({
                     id="primary-color"
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="w-12 h-10 rounded cursor-pointer border border-stone-300"
+                    className="w-12 h-8 rounded cursor-pointer border border-stone-300"
                   />
                   <Input
                     value={primaryColor}
@@ -219,7 +218,7 @@ export default function TenantBrandingDialog({
                     id="secondary-color"
                     value={secondaryColor}
                     onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="w-12 h-10 rounded cursor-pointer border border-stone-300"
+                    className="w-12 h-8 rounded cursor-pointer border border-stone-300"
                   />
                   <Input
                     value={secondaryColor}
@@ -242,7 +241,7 @@ export default function TenantBrandingDialog({
                     id="text-color"
                     value={textColor}
                     onChange={(e) => setTextColor(e.target.value)}
-                    className="w-12 h-10 rounded cursor-pointer border border-stone-300"
+                    className="w-12 h-8 rounded cursor-pointer border border-stone-300"
                   />
                   <Input
                     value={textColor}
@@ -319,21 +318,21 @@ export default function TenantBrandingDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex gap-2">
-          <Button
-            variant="outline"
+        <DialogButtonGroup justify="between" gap="normal" className="flex-col sm:flex-row">
+          <DialogSecondaryButton
             onClick={handleClose}
             disabled={isSaving}
-            className="flex-1">
+            className="w-full sm:w-auto">
             Cancel
-          </Button>
-          <Button
+          </DialogSecondaryButton>
+          <DialogPrimaryButton
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 bg-amber-700 hover:bg-amber-800 text-white">
+            isLoading={isSaving}
+            className="w-full sm:w-auto">
             {isSaving ? "Saving..." : "Save Branding"}
-          </Button>
-        </DialogFooter>
+          </DialogPrimaryButton>
+        </DialogButtonGroup>
       </DialogContent>
     </Dialog>
   );

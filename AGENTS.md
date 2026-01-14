@@ -127,4 +127,50 @@ deleted_at datetime Optional deletion timestamp
 
 ⸻
 
+## 11. Design System Standards
+
+### Spacing & Padding (Established Jan 14, 2026)
+
+**Core Standards:**
+- Dialog/Card padding: `p-4` (16px)
+- Default gap between elements: `gap-4` (16px)
+- Form field gap: `gap-4`, field internal: `gap-2`
+- Input padding: `px-2.5 py-1`, height: `h-8`
+- Button group gap: `gap-3` (12px)
+- Responsive sections: `px-4 py-8` (mobile) → `md:px-6 md:py-10` → `lg:px-8 lg:py-12`
+
+**Key Files:**
+- Reference: `SPACING_AND_PADDING_STANDARD.md` (full guide)
+- Quick lookup: `SPACING_QUICK_REFERENCE.md` (copy-paste patterns)
+- Audit status: `SPACING_CONSISTENCY_AUDIT.md` (what needs fixing)
+
+### Button Styling (Established Jan 2026)
+
+**Standards:**
+- Primary buttons: `bg-amber-700 text-white font-bold uppercase`
+- Secondary buttons: `border border-stone-300 text-stone-900`
+- Destructive buttons: `bg-red-600 text-white font-bold uppercase`
+- Use DialogButton components, never inline styles
+
+**Reference:** `BUTTON_STYLING_STANDARD.md`
+
+### When Creating Components
+
+1. **Dialog:** Use `DialogContent p-4 gap-4`
+2. **Card:** Use `Card/CardContent p-4`
+3. **Form:** Use `FieldSet gap-4` + `Field gap-2`
+4. **Inputs:** Use `Input` component (already has standard padding)
+5. **Buttons:** Use `DialogPrimaryButton`, `DialogSecondaryButton`, etc.
+6. **Sections:** Use responsive `px-4 py-8 md:px-6 md:py-10 lg:px-8 lg:py-12`
+7. **Grids:** Use `gap-4` for card grids
+
+### When Updating Components
+
+- Match spacing to the standard guides before merging
+- Use components instead of custom padding
+- Test responsive: mobile (base), tablet (md:), desktop (lg:)
+- Reference existing components as examples
+
+⸻
+
 End of Specification

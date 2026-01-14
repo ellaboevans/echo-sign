@@ -19,6 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { showToast } from "@/lib/toast";
+import { MESSAGES } from "@/lib/messages";
+import { DialogPrimaryButton, DialogSecondaryButton, DialogButtonGroup } from "@/components/ui/dialog-buttons";
 
 interface SpaceEditDialogProps {
   space: Space;
@@ -42,7 +45,7 @@ export default function SpaceEditDialog({
 
   const handleSave = () => {
     if (!visibility) {
-      alert("Please select a visibility setting");
+      showToast.error(MESSAGES.FORM.VISIBILITY_REQUIRED);
       return;
     }
 
@@ -156,21 +159,21 @@ export default function SpaceEditDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex gap-2">
-          <Button
-            variant="outline"
+        <DialogButtonGroup>
+          <DialogSecondaryButton
             onClick={handleClose}
             disabled={isSaving}
-            className="flex-1">
+          >
             Cancel
-          </Button>
-          <Button
+          </DialogSecondaryButton>
+          <DialogPrimaryButton
             onClick={handleSave}
             disabled={isSaving || !name.trim()}
-            className="flex-1 bg-amber-700 hover:bg-amber-800 text-white">
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        </DialogFooter>
+            isLoading={isSaving}
+          >
+            Save Changes
+          </DialogPrimaryButton>
+        </DialogButtonGroup>
       </DialogContent>
     </Dialog>
   );

@@ -6,6 +6,13 @@ import { Tenant, Space, Visibility, SignatureEntry } from "@/types/types";
 import SignatureCanvas from "./signature-canvas";
 import { Input } from "./ui/input";
 import { generateUUID } from "@/lib/uuid";
+import { showToast } from "@/lib/toast";
+import {
+  signWallSchema,
+  getFieldError,
+  hasFieldError,
+} from "@/lib/validations";
+import { z } from "zod";
 import {
   Select,
   SelectContent,
@@ -41,11 +48,27 @@ export default function SignWallDialog({
   const [visibility, setVisibility] = useState<Visibility>(Visibility.PUBLIC);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signatureData, setSignatureData] = useState<string | null>(null);
+  const [errors, setErrors] = useState<z.ZodError | null>(null);
 
   const handleSave = async (data: string) => {
     setSignatureData(data);
-    if (!name.trim()) {
-      alert("A name is required to associate with your signature.");
+    setErrors(null);
+
+    // Validate form data
+    const formData = {
+      name: name.trim(),
+      email: email.trim() || "",
+      memory: memory.trim() || "",
+      visibility,
+      signatureData: data,
+    };
+
+    const result = signWallSchema.safeParse(formData);
+
+    if (!result.success) {
+      setErrors(result.error);
+      const firstError = result.error.errors[0];
+      showToast.error(firstError.message);
       return;
     }
 
@@ -62,34 +85,35 @@ export default function SignWallDialog({
         tenantId: tenant.id,
         spaceId: space.id,
         userId: undefined, // Guest signatures don't have user ID
-        userName: name,
-        userEmail: email || undefined,
-        signatureData: data,
-        memoryText: memory.trim() || undefined,
-        visibility: visibility,
+        userName: result.data.name,
+        userEmail: result.data.email || undefined,
+        signatureData: result.data.signatureData,
+        memoryText: result.data.memory || undefined,
+        visibility: result.data.visibility,
         createdAt: Date.now(),
       };
 
       store.saveEntry(entry);
       store.track(tenant.id, "sign_wall", { spaceId: space.id, visibility });
 
-      // Callback and reset
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setOpen(false);
-        setName("");
-        setEmail("");
-        setMemory("");
-        setVisibility(Visibility.PUBLIC);
-        setSignatureData(null);
-        
-        if (onSigned) {
-          onSigned();
-        }
-      }, 500);
+      showToast.success("Signature saved successfully!");
+      
+      // Reset form
+      setIsSubmitting(false);
+      setOpen(false);
+      setName("");
+      setEmail("");
+      setMemory("");
+      setVisibility(Visibility.PUBLIC);
+      setSignatureData(null);
+      setErrors(null);
+      
+      if (onSigned) {
+        onSigned();
+      }
     } catch (error) {
-      console.error("Error saving signature:", error);
-      alert("Failed to save signature. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to save signature. Please try again.";
+      showToast.error(errorMessage);
       setIsSubmitting(false);
     }
   };
@@ -121,11 +145,23 @@ export default function SignWallDialog({
                 id="name"
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors) setErrors(null);
+                }}
                 placeholder="How should you be remembered?"
-                className="w-full"
+                className={`w-full ${
+                  hasFieldError(errors, "name")
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
                 required
               />
+              {hasFieldError(errors, "name") && (
+                <p className="text-xs text-red-600 font-medium">
+                  {getFieldError(errors, "name")}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <label
@@ -137,10 +173,22 @@ export default function SignWallDialog({
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors) setErrors(null);
+                }}
                 placeholder="For recovery (never public)"
-                className="w-full"
+                className={`w-full ${
+                  hasFieldError(errors, "email")
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
               />
+              {hasFieldError(errors, "email") && (
+                <p className="text-xs text-red-600 font-medium">
+                  {getFieldError(errors, "email")}
+                </p>
+              )}
             </div>
           </div>
 
@@ -153,10 +201,28 @@ export default function SignWallDialog({
             <textarea
               id="memory"
               value={memory}
-              onChange={(e) => setMemory(e.target.value)}
+              onChange={(e) => {
+                setMemory(e.target.value);
+                if (errors) setErrors(null);
+              }}
               placeholder="Write a brief thought, message, or reflection..."
-              className="w-full px-2 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic"
+              className={`w-full px-2 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/20 focus:border-amber-700 transition-all text-sm h-32 resize-none font-serif italic ${
+                hasFieldError(errors, "memory")
+                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                  : ""
+              }`}
+              maxLength={500}
             />
+            <div className="flex justify-between items-center">
+              {hasFieldError(errors, "memory") && (
+                <p className="text-xs text-red-600 font-medium">
+                  {getFieldError(errors, "memory")}
+                </p>
+              )}
+              <p className="text-xs text-stone-400 ml-auto">
+                {memory.length}/500 characters
+              </p>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -194,6 +260,16 @@ export default function SignWallDialog({
             </div>
 
             <SignatureCanvas onSave={handleSave} onClear={() => {}} />
+            {hasFieldError(errors, "signatureData") && (
+              <p className="text-xs text-red-600 font-medium mt-2">
+                {getFieldError(errors, "signatureData")}
+              </p>
+            )}
+            {hasFieldError(errors, "visibility") && (
+              <p className="text-xs text-red-600 font-medium mt-2">
+                {getFieldError(errors, "visibility")}
+              </p>
+            )}
           </div>
         </div>
 

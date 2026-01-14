@@ -48,73 +48,68 @@ export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
     const currentTenant = store.getCurrentTenant();
-    timer = setTimeout(() => {
-      setTenant(currentTenant);
-    }, 0);
-
-    if (currentTenant) {
-      // Get all spaces for this tenant
-      const spaces = store.getSpacesByTenant(currentTenant.id);
-      const entries = store.getEntriesByTenant(currentTenant.id);
-      const analytics = store.getAnalyticsByTenant(currentTenant.id);
-
-      // Calculate per-space analytics
-      const analytics_data = spaces.map((space) => {
-        const spaceEntries = entries.filter(
-          (e) => e.spaceId === space.id && !e.deletedAt
-        );
-        const spaceViews = analytics.filter(
-          (a) => a.type === "view_space" && a.metadata?.spaceId === space.id
-        ).length;
-        const spaceSigns = analytics.filter(
-          (a) => a.type === "sign_space" && a.metadata?.spaceId === space.id
-        ).length;
-        const lastEntry = spaceEntries.toSorted(
-          (a, b) => b.createdAt - a.createdAt
-        )[0];
-
-        return {
-          spaceId: space.id,
-          spaceName: space.name,
-          signatureCount: spaceEntries.length,
-          publicCount: spaceEntries.filter((e) => e.visibility === "public")
-            .length,
-          views: spaceViews,
-          signs: spaceSigns,
-          lastSigned: lastEntry?.createdAt,
-        };
-      });
-
-      timer = setTimeout(() => {
-        setSpaceAnalytics(analytics_data);
-
-        setTotalStats({
-          totalSpaces: spaces.length,
-          totalSignatures: entries.filter((e) => !e.deletedAt).length,
-          totalViews: analytics.filter((a) => a.type === "view_space").length,
-          totalSigns: analytics.filter((a) => a.type === "sign_space").length,
-          avgSignaturesPerSpace:
-            spaces.length > 0
-              ? (
-                  entries.filter((e) => !e.deletedAt).length / spaces.length
-                ).toFixed(1)
-              : 0,
-        });
-      }, 0);
-
-      // Calculate total stats
-    }
-    timer = setTimeout(() => {
+    
+    if (!currentTenant) {
       setIsLoading(false);
-    }, 0);
-    return () => clearTimeout(timer);
+      return;
+    }
+
+    setTenant(currentTenant);
+
+    // Get all spaces for this tenant
+    const spaces = store.getSpacesByTenant(currentTenant.id);
+    const entries = store.getEntriesByTenant(currentTenant.id);
+    const analytics = store.getAnalyticsByTenant(currentTenant.id);
+
+    // Calculate per-space analytics
+    const analytics_data = spaces.map((space) => {
+      const spaceEntries = entries.filter(
+        (e) => e.spaceId === space.id && !e.deletedAt
+      );
+      const spaceViews = analytics.filter(
+        (a) => a.type === "view_space" && a.metadata?.spaceId === space.id
+      ).length;
+      const spaceSigns = analytics.filter(
+        (a) => a.type === "sign_space" && a.metadata?.spaceId === space.id
+      ).length;
+      const lastEntry = spaceEntries.toSorted(
+        (a, b) => b.createdAt - a.createdAt
+      )[0];
+
+      return {
+        spaceId: space.id,
+        spaceName: space.name,
+        signatureCount: spaceEntries.length,
+        publicCount: spaceEntries.filter((e) => e.visibility === "public")
+          .length,
+        views: spaceViews,
+        signs: spaceSigns,
+        lastSigned: lastEntry?.createdAt,
+      };
+    });
+
+    setSpaceAnalytics(analytics_data);
+
+    setTotalStats({
+      totalSpaces: spaces.length,
+      totalSignatures: entries.filter((e) => !e.deletedAt).length,
+      totalViews: analytics.filter((a) => a.type === "view_space").length,
+      totalSigns: analytics.filter((a) => a.type === "sign_space").length,
+      avgSignaturesPerSpace:
+        spaces.length > 0
+          ? (
+              entries.filter((e) => !e.deletedAt).length / spaces.length
+            ).toFixed(1)
+          : 0,
+    });
+
+    setIsLoading(false);
   }, []);
 
   if (isLoading || !tenant || !totalStats) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -139,7 +134,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Spaces</CardTitle>
-            <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+            <LayoutGrid className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStats.totalSpaces}</div>
@@ -154,7 +149,7 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-medium">
               Total Signatures
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -167,7 +162,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+            <Eye className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStats.totalViews}</div>
@@ -178,7 +173,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg per Space</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <TrendingUp className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

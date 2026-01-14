@@ -14,7 +14,7 @@ export default function OnboardingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md space-y-8 text-center">
         {/* Header */}
         <div className="space-y-4">
