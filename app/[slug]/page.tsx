@@ -31,7 +31,7 @@ export default function SpaceSigningPage({
 
     const subdomain = getCurrentSubdomain();
     
-    // Load tenant from subdomain (always get fresh data from store)
+    // Load tenant from subdomain
     const foundTenant = subdomain
       ? store.getTenantBySubdomain(subdomain)
       : store.getCurrentTenant();
@@ -41,7 +41,6 @@ export default function SpaceSigningPage({
       return;
     }
 
-    // Ensure we have the latest branding
     setTenant(foundTenant);
 
     // Load space by slug
@@ -118,14 +117,7 @@ export default function SpaceSigningPage({
       {entries.length > 0 ? (
         <SignatureMural entries={entries} spaceName={space.name} branding={tenant.branding} />
       ) : (
-        <div 
-          className="min-h-screen flex items-center justify-center p-4"
-          style={{
-            background: tenant.branding?.muralBackground
-              ? `linear-gradient(to bottom right, ${tenant.branding.muralBackground.bgColor1 || "#FAF5F0"}, ${tenant.branding.muralBackground.bgColor2 || "#FEFAF0"}, ${tenant.branding.muralBackground.bgColor3 || "#FAF5F0"})`
-              : "linear-gradient(to bottom right, #FAF5F0, #FEFAF0, #FAF5F0)"
-          }}
-        >
+        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-amber-100 flex items-center justify-center p-4">
           <div className="text-center max-w-md">
             <div className="mb-6 text-6xl">✍️</div>
             <p className="text-stone-400 font-serif italic text-xl mb-2">

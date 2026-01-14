@@ -54,13 +54,7 @@ export const store = {
   
   saveTenant: (tenant: Tenant) => {
     const tenants = store.getTenants();
-    const existing = tenants.findIndex((t) => t.id === tenant.id);
-    if (existing >= 0) {
-      tenants[existing] = tenant;
-    } else {
-      tenants.push(tenant);
-    }
-    set(STORAGE_KEYS.TENANTS, tenants);
+    set(STORAGE_KEYS.TENANTS, [...tenants, tenant]);
     set(STORAGE_KEYS.CURRENT_TENANT, tenant);
   },
 
