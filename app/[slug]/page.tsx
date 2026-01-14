@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { store } from "@/store/store";
-import SignatureCard from "@/components/signature-card";
+import SignatureMural from "@/components/signature-mural";
 import SignWallDialog from "@/components/sign-wall-dialog";
 import Link from "next/link";
 import { Tenant, Space, SignatureEntry } from "@/types/types";
@@ -80,54 +80,55 @@ export default function SpaceSigningPage({
 
   return (
     <div className="min-h-dvh bg-white">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-stone-200 pb-10 mb-12">
-          <div className="max-w-2xl space-y-4">
-            <Link
-              href="/"
-              className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-stone-900 transition-colors">
-              ← Browse Spaces
-            </Link>
-            <h1 className="text-5xl md:text-6xl font-display font-bold text-stone-900">
-              {space.name}
-            </h1>
-            {space.description && (
-              <p className="text-stone-600 leading-relaxed italic">
-                {space.description}
-              </p>
-            )}
-          </div>
-          <div className="shrink-0">
-            <SignWallDialog
-              tenant={tenant}
-              space={space}
-              onSigned={() => {
-                const publicEntries = store.getPublicEntriesBySpace(space.id);
-                setEntries(publicEntries);
-              }}
-            />
+      {/* Header Section */}
+      <div className="bg-white border-b border-stone-200">
+        <div className="max-w-6xl mx-auto px-4 py-12 md:px-6 md:py-14 lg:px-8 lg:py-16">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="max-w-2xl space-y-4 flex-1">
+              <Link
+                href="/"
+                className="text-xs font-bold uppercase tracking-widest text-stone-400 hover:text-stone-900 transition-colors inline-block">
+                ← Browse Spaces
+              </Link>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-stone-900 text-balance">
+                {space.name}
+              </h1>
+              {space.description && (
+                <p className="text-base md:text-lg text-stone-600 leading-relaxed italic text-pretty">
+                  {space.description}
+                </p>
+              )}
+            </div>
+            <div className="shrink-0">
+              <SignWallDialog
+                tenant={tenant}
+                space={space}
+                onSigned={() => {
+                  const publicEntries = store.getPublicEntriesBySpace(space.id);
+                  setEntries(publicEntries);
+                }}
+              />
+            </div>
           </div>
         </div>
-
-        {/* Signature Grid */}
-        {entries.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {entries.map((entry) => (
-              <SignatureCard key={entry.id} entry={entry} />
-            ))}
-          </div>
-        ) : (
-          <div className="col-span-full py-20 bg-stone-50 rounded-lg border-2 border-dashed border-stone-200 text-center">
-            <p className="text-stone-400 font-serif italic text-lg">
-              This space is waiting for its first resident.
-            </p>
-            <p className="text-xs uppercase tracking-widest text-stone-400 mt-2 font-bold">
-              Will it be you?
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* Mural Section */}
+      {entries.length > 0 ? (
+        <SignatureMural entries={entries} spaceName={space.name} />
+      ) : (
+        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-amber-100 flex items-center justify-center p-4">
+          <div className="text-center max-w-md">
+            <div className="mb-6 text-6xl">✍️</div>
+            <p className="text-stone-400 font-serif italic text-xl mb-2">
+              This wall is waiting for its first signature.
+            </p>
+            <p className="text-xs uppercase tracking-widest text-stone-400 font-bold">
+              Be the first to leave your mark
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
