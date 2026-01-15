@@ -7,6 +7,7 @@ import { useTenant } from "@/store/tenant-context";
 import Link from "next/link";
 import FeaturedMemory from "@/components/featured-memory";
 import { SignatureEntry, Space, Tenant } from "@/types/types";
+import FolderWithDocuments from "@/components/folder-with-documents";
 
 interface TenantWallViewProps {
   tenantParam?: string; // For path-based routing
@@ -187,74 +188,18 @@ export default function TenantWallView({
           </div>
         )}
 
-        {/* Spaces Grid */}
+        {/* Spaces Grid - Folders with Documents */}
         {spaces.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {spaces.map((space) => (
-              <Link
+              <FolderWithDocuments
                 key={space.id}
-                href={`/${space.slug}`}
-                className="group bg-white border border-stone-200 rounded-none p-4 hover:shadow-lg hover:outline hover:outline-1 transition-all duration-200 ease-in-out"
-                style={{
-                  borderColor: branding.primaryColor
-                    ? `${primaryColor}40`
-                    : undefined,
-                  outlineColor: primaryColor,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = primaryColor;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = branding.primaryColor
-                    ? `${primaryColor}40`
-                    : "";
-                }}>
-                {/* Space Header */}
-                <div className="mb-4 space-y-1">
-                  <h2
-                    className="text-lg md:text-xl font-bold transition-colors text-balance"
-                    style={{ color: textColor }}>
-                    {space.name}
-                  </h2>
-                  {space.description && (
-                    <p className="text-stone-600 text-xs md:text-sm line-clamp-2 text-pretty">
-                      {space.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="rounded-none p-3" style={{ backgroundColor: `${primaryColor}10` }}>
-                    <div className="text-lg font-bold" style={{ color: primaryColor }}>
-                      {space.signatureCount}
-                    </div>
-                    <p className="text-xs text-stone-600 font-medium">
-                      {space.signatureCount === 1 ? "signature" : "signatures"}
-                    </p>
-                  </div>
-                  <div className="rounded-none p-3" style={{ backgroundColor: `${secondaryColor}10` }}>
-                    <div className="text-lg font-bold" style={{ color: secondaryColor }}>
-                      {space.publicCount}
-                    </div>
-                    <p className="text-xs text-stone-600 font-medium">public</p>
-                  </div>
-                </div>
-
-                {/* Meta */}
-                <div
-                  className="text-xs flex items-center justify-between pt-3 border-t border-stone-100"
-                  style={{ color: secondaryColor }}>
-                  <span className="font-medium">
-                    {new Date(space.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short" })}
-                  </span>
-                  <span
-                    className="font-bold uppercase tracking-widest group-hover:underline"
-                    style={{ color: primaryColor }}>
-                    View →
-                  </span>
-                </div>
-              </Link>
+                space={space}
+                primaryColor={primaryColor}
+                secondaryColor={secondaryColor}
+                textColor={textColor}
+                signatureCount={space.signatureCount || 0}
+              />
             ))}
           </div>
         ) : (

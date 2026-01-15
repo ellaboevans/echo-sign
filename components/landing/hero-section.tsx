@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { LoginDialog } from "@/components/login-dialog";
 import { LandingButton } from "@/components/landing/landing-button";
+import { cn } from "@/lib/utils";
 
 export default function HeroSection() {
   const containerVariants = {
@@ -63,9 +64,15 @@ export default function HeroSection() {
             Get Started Free
           </LandingButton>
           <LoginDialog>
-            <LandingButton variant="secondary" onClick={() => setLoginOpen(true)}>
+            <div
+              onClick={() => setLoginOpen(true)}
+              className={cn(
+                "px-8 py-3 font-bold uppercase tracking-widest rounded-lg transition-all active:scale-95 focus:outline-none focus:ring-2",
+                "border border-stone-300 text-stone-900 hover:bg-stone-50 focus:ring-stone-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+            >
               Sign In
-            </LandingButton>
+            </div>
           </LoginDialog>
         </motion.div>
 

@@ -82,7 +82,7 @@ export default function SpaceSigningPage({
     <div className="min-h-dvh bg-white">
       {/* Header Section */}
       <div className="bg-white border-b border-stone-200">
-        <div className="max-w-6xl mx-auto px-4 py-12 md:px-6 md:py-14 lg:px-8 lg:py-16">
+        <div className="max-w-6xl mx-auto px-4 py-12 md:px-6 md:py-14 lg:px-8 lg:py-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="max-w-2xl space-y-4 flex-1">
               <Link
